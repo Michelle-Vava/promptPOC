@@ -82,10 +82,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="user" focused={focused} muted={tk.muted} />,
         }}
       />
-      <Tabs.Screen
-        name="provider"
-        options={{ href: null }}
-      />
     </Tabs>
   )
 }

@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'
@@ -6,11 +7,50 @@ import { useTheme } from '../../lib/theme'
 import { useBookings } from '../../lib/bookings-context'
 import { s, ms, vs } from '../../lib/scale'
 
+/* ── calendar helpers ── */
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+function daysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate() }
+function firstDow(y: number, m: number) { return new Date(y, m, 1).getDay() }
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
 export default function ActivityScreen() {
   const { tk } = useTheme()
   const insets = useSafeAreaInsets()
   const topPad = Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 0) : insets.top
   const { bookings, waitlisted, removeBooking, removeWaitlist } = useBookings()
+
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const today = useMemo(() => new Date(), [])
+  const [calYear, setCalYear] = useState(today.getFullYear())
+  const [calMonth, setCalMonth] = useState(today.getMonth())
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+
+  /* mock dates for calendar dots – spread bookings across nearby days */
+  const bookingDates = useMemo(() => {
+    const dates: { date: Date; booking: typeof bookings[0] }[] = []
+    bookings.forEach((b, i) => {
+      const d = new Date(today)
+      d.setDate(d.getDate() + i)
+      dates.push({ date: d, booking: b })
+    })
+    waitlisted.forEach((w, i) => {
+      const d = new Date(today)
+      d.setDate(d.getDate() + bookings.length + i + 1)
+      dates.push({ date: d, booking: w as any })
+    })
+    return dates
+  }, [bookings, waitlisted, today])
+
+  const selectedDayBookings = useMemo(() => {
+    if (selectedDay === null) return []
+    const target = new Date(calYear, calMonth, selectedDay)
+    return bookingDates.filter(bd => isSameDay(bd.date, target))
+  }, [selectedDay, calYear, calMonth, bookingDates])
 
   const confirmCancel = (id: number, providerName: string) => {
     Alert.alert(
@@ -36,12 +76,72 @@ export default function ActivityScreen() {
 
   const isEmpty = bookings.length === 0 && waitlisted.length === 0
 
+  /* ── calendar grid ── */
+  const totalDays = daysInMonth(calYear, calMonth)
+  const startDow = firstDow(calYear, calMonth)
+  const calCells: (number | null)[] = Array(startDow).fill(null).concat(Array.from({ length: totalDays }, (_, i) => i + 1))
+  while (calCells.length % 7 !== 0) calCells.push(null)
+
+  const hasDot = (day: number) => bookingDates.some(bd => isSameDay(bd.date, new Date(calYear, calMonth, day)))
+
+  const prevMonth = () => {
+    setSelectedDay(null)
+    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1) } else setCalMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    setSelectedDay(null)
+    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1) } else setCalMonth(m => m + 1)
+  }
+
+  /* ── format date helper ── */
+  const formatDate = (d: Date) => {
+    if (isSameDay(d, today)) return 'Today'
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+    if (isSameDay(d, tomorrow)) return 'Tomorrow'
+    return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`
+  }
+
+  /* ── card renderer (shared) ── */
+  const renderCard = (b: typeof bookings[0], isWaitlist = false) => {
+    const bd = bookingDates.find(bd => bd.booking.id === b.id)
+    const dateLabel = bd ? formatDate(bd.date) : ''
+    return (
+      <View key={b.id} style={[styles.card, isWaitlist && styles.cardWaitlist, { backgroundColor: tk.card, borderLeftColor: b.color || T.accent }]}>
+        <View style={[styles.cardLeft, { backgroundColor: tk.surface }]}>
+          <Feather name={(b.icon || 'grid') as any} size={ms(18)} color={isWaitlist ? T.accent : T.green} />
+        </View>
+        <View style={styles.cardBody}>
+          <Text style={[styles.cardProvider, { color: tk.text }]}>{b.provider.name}</Text>
+          {dateLabel !== '' && <Text style={[styles.cardDate, { color: T.accent }]}>{dateLabel}</Text>}
+          <Text style={[styles.cardDetail, { color: tk.muted }]}>{isWaitlist ? `Waiting for ${(b as any).hour}` : `${b.slot} · $${b.provider.price}`}</Text>
+          <Text style={[styles.cardAddr, { color: tk.muted }]}>{b.provider.addr}</Text>
+        </View>
+        <Pressable
+          onPress={() => isWaitlist ? confirmRemoveWaitlist(b.id, b.provider.name) : confirmCancel(b.id, b.provider.name)}
+          style={[styles.cancelBtn, { backgroundColor: tk.surface }]} hitSlop={8}
+        >
+          <Feather name="x" size={ms(16)} color={tk.muted} />
+        </Pressable>
+      </View>
+    )
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: tk.bg }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + vs(16), backgroundColor: tk.bg, borderBottomColor: tk.line }]}>
-        <Text style={[styles.title, { color: tk.text }]}>Activity</Text>
-        {!isEmpty && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={[styles.title, { color: tk.text }]}>Activity</Text>
+          <View style={[styles.toggleBar, { backgroundColor: tk.surface, borderColor: tk.line }]}>
+            <Pressable onPress={() => setViewMode('list')} style={[styles.toggleBtn, viewMode === 'list' && { backgroundColor: tk.card }]}>
+              <Feather name="list" size={ms(14)} color={viewMode === 'list' ? tk.text : tk.muted} />
+            </Pressable>
+            <Pressable onPress={() => setViewMode('calendar')} style={[styles.toggleBtn, viewMode === 'calendar' && { backgroundColor: tk.card }]}>
+              <Feather name="calendar" size={ms(14)} color={viewMode === 'calendar' ? tk.text : tk.muted} />
+            </Pressable>
+          </View>
+        </View>
+        {!isEmpty && viewMode === 'list' && (
           <Text style={[styles.subtitle, { color: tk.muted }]}>
             {bookings.length} booking{bookings.length !== 1 ? 's' : ''} · {waitlisted.length} waitlisted
           </Text>
@@ -50,60 +150,105 @@ export default function ActivityScreen() {
 
       <ScrollView
         style={[styles.scroll, { backgroundColor: tk.bg }]}
-        contentContainerStyle={[styles.scrollContent, isEmpty && styles.emptyContent]}
+        contentContainerStyle={[styles.scrollContent, isEmpty && viewMode === 'list' && styles.emptyContent]}
         showsVerticalScrollIndicator={false}
       >
-        {isEmpty ? (
-          <View style={styles.emptyState}>
-            <Feather name="calendar" size={40} color={tk.muted} style={{ marginBottom: vs(16) }} />
-            <Text style={[styles.emptyTitle, { color: tk.text }]}>No activity yet</Text>
-            <Text style={[styles.emptyDesc, { color: tk.muted }]}>
-              Book a service from the map to see{'\n'}your upcoming appointments here
-            </Text>
-          </View>
+        {viewMode === 'list' ? (
+          /* ── LIST VIEW ── */
+          isEmpty ? (
+            <View style={styles.emptyState}>
+              <Feather name="calendar" size={40} color={tk.muted} style={{ marginBottom: vs(16) }} />
+              <Text style={[styles.emptyTitle, { color: tk.text }]}>No activity yet</Text>
+              <Text style={[styles.emptyDesc, { color: tk.muted }]}>
+                Book a service from the map to see{'\n'}your upcoming appointments here
+              </Text>
+            </View>
+          ) : (
+            <>
+              {bookings.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: tk.muted }]}>CONFIRMED</Text>
+                  {bookings.map(b => renderCard(b))}
+                </View>
+              )}
+              {waitlisted.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: tk.muted }]}>WAITLISTED</Text>
+                  {waitlisted.map(w => renderCard(w as any, true))}
+                </View>
+              )}
+            </>
+          )
         ) : (
+          /* ── CALENDAR VIEW ── */
           <>
-            {/* Confirmed */}
-            {bookings.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionLabel, { color: tk.muted }]}>CONFIRMED</Text>
-                {bookings.map(b => (
-                  <View key={b.id} style={[styles.card, { backgroundColor: tk.card, borderLeftColor: b.color || T.accent }]}>
-                    <View style={[styles.cardLeft, { backgroundColor: tk.surface }]}>
-                      <Feather name={(b.icon || 'grid') as any} size={ms(18)} color={T.green} />
-                    </View>
-                    <View style={styles.cardBody}>
-                      <Text style={[styles.cardProvider, { color: tk.text }]}>{b.provider.name}</Text>
-                      <Text style={[styles.cardDetail, { color: tk.muted }]}>{b.slot} · ${b.provider.price}</Text>
-                      <Text style={[styles.cardAddr, { color: tk.muted }]}>{b.provider.addr}</Text>
-                    </View>
-                    <Pressable onPress={() => confirmCancel(b.id, b.provider.name)} style={[styles.cancelBtn, { backgroundColor: tk.surface }]} hitSlop={8}>
-                      <Feather name="x" size={ms(16)} color={tk.muted} />
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            )}
+            {/* Month nav */}
+            <View style={styles.calNav}>
+              <Pressable onPress={prevMonth} hitSlop={12}>
+                <Feather name="chevron-left" size={ms(20)} color={tk.text} />
+              </Pressable>
+              <Text style={[styles.calMonthLabel, { color: tk.text }]}>{MONTHS[calMonth]} {calYear}</Text>
+              <Pressable onPress={nextMonth} hitSlop={12}>
+                <Feather name="chevron-right" size={ms(20)} color={tk.text} />
+              </Pressable>
+            </View>
 
-            {/* Waitlisted */}
-            {waitlisted.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionLabel, { color: tk.muted }]}>WAITLISTED</Text>
-                {waitlisted.map(w => (
-                  <View key={w.id} style={[styles.card, styles.cardWaitlist, { backgroundColor: tk.card, borderLeftColor: w.color || T.accent }]}>
-                    <View style={[styles.cardLeft, { backgroundColor: tk.surface }]}>
-                      <Feather name={(w.icon || 'grid') as any} size={ms(18)} color={T.accent} />
-                    </View>
-                    <View style={styles.cardBody}>
-                      <Text style={[styles.cardProvider, { color: tk.text }]}>{w.provider.name}</Text>
-                      <Text style={[styles.cardDetail, { color: tk.muted }]}>Waiting for {w.hour}</Text>
-                      <Text style={[styles.cardAddr, { color: tk.muted }]}>{w.provider.addr}</Text>
-                    </View>
-                    <Pressable onPress={() => confirmRemoveWaitlist(w.id, w.provider.name)} style={[styles.cancelBtn, { backgroundColor: tk.surface }]} hitSlop={8}>
-                      <Feather name="x" size={ms(16)} color={tk.muted} />
+            {/* Day headers */}
+            <View style={styles.calRow}>
+              {DAYS.map(d => (
+                <View key={d} style={styles.calCell}>
+                  <Text style={[styles.calDayHeader, { color: tk.muted }]}>{d}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Day grid */}
+            {Array.from({ length: calCells.length / 7 }, (_, week) => (
+              <View key={week} style={styles.calRow}>
+                {calCells.slice(week * 7, week * 7 + 7).map((day, i) => {
+                  const isToday = day !== null && isSameDay(new Date(calYear, calMonth, day), today)
+                  const isSelected = day !== null && day === selectedDay
+                  const dot = day !== null && hasDot(day)
+                  return (
+                    <Pressable
+                      key={`${week}-${i}`}
+                      style={styles.calCell}
+                      onPress={() => day !== null && setSelectedDay(day === selectedDay ? null : day)}
+                    >
+                      <View style={[
+                        styles.calDayCircle,
+                        isSelected && { backgroundColor: T.accent },
+                        isToday && !isSelected && { borderWidth: 1.5, borderColor: T.accent },
+                      ]}>
+                        <Text style={[
+                          styles.calDayText,
+                          { color: day === null ? 'transparent' : isSelected ? T.white : tk.text },
+                          isToday && !isSelected && { color: T.accent },
+                        ]}>
+                          {day ?? ''}
+                        </Text>
+                      </View>
+                      {dot && <View style={[styles.calDot, isSelected && { backgroundColor: T.white }]} />}
                     </Pressable>
-                  </View>
-                ))}
+                  )
+                })}
+              </View>
+            ))}
+
+            {/* Selected day bookings */}
+            {selectedDay !== null && (
+              <View style={{ marginTop: vs(16) }}>
+                <Text style={[styles.sectionLabel, { color: tk.muted }]}>
+                  {MONTHS[calMonth]} {selectedDay}
+                </Text>
+                {selectedDayBookings.length > 0 ? (
+                  selectedDayBookings.map(bd => {
+                    const isW = waitlisted.some(w => w.id === bd.booking.id)
+                    return renderCard(bd.booking, isW)
+                  })
+                ) : (
+                  <Text style={[styles.calEmpty, { color: tk.muted }]}>No bookings this day</Text>
+                )}
               </View>
             )}
           </>
@@ -193,6 +338,10 @@ const styles = StyleSheet.create({
     fontSize: ms(14),
     fontFamily: 'Sora_700Bold',
   },
+  cardDate: {
+    fontSize: ms(11),
+    fontFamily: 'Sora_700Bold',
+  },
   cardDetail: {
     fontSize: ms(12),
     fontFamily: 'Sora_600SemiBold',
@@ -207,5 +356,68 @@ const styles = StyleSheet.create({
     borderRadius: s(10),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  /* toggle bar */
+  toggleBar: {
+    flexDirection: 'row',
+    borderRadius: s(10),
+    borderWidth: 1,
+    padding: 2,
+    gap: 2,
+  },
+  toggleBtn: {
+    paddingVertical: vs(5),
+    paddingHorizontal: s(10),
+    borderRadius: s(8),
+  },
+
+  /* calendar */
+  calNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: vs(12),
+  },
+  calMonthLabel: {
+    fontSize: ms(15),
+    fontFamily: 'Sora_700Bold',
+  },
+  calRow: {
+    flexDirection: 'row',
+  },
+  calCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: vs(4),
+  },
+  calDayHeader: {
+    fontSize: ms(10),
+    fontFamily: 'Sora_700Bold',
+    marginBottom: vs(6),
+  },
+  calDayCircle: {
+    width: s(32),
+    height: s(32),
+    borderRadius: s(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calDayText: {
+    fontSize: ms(13),
+    fontFamily: 'Sora_600SemiBold',
+  },
+  calDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: T.accent,
+    marginTop: 2,
+  },
+  calEmpty: {
+    fontSize: ms(13),
+    fontFamily: 'Sora_400Regular',
+    textAlign: 'center',
+    paddingVertical: vs(20),
   },
 })

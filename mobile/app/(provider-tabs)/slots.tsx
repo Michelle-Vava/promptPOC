@@ -5,7 +5,7 @@ import { Feather } from '@expo/vector-icons'
 import { T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
 
-const SLOT_HOURS = ['8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','8 PM']
+const SLOT_HOURS = ['8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','8 PM'] // matches HOURS from data.ts + 8 AM boundary
 const DURATIONS = [15, 20, 30, 45, 60, 90]
 
 function to24(h: string) {

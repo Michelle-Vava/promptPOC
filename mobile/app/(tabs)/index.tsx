@@ -59,6 +59,11 @@ export default function MapScreen() {
   const activeProv = PROVIDERS.find(p => p.id === activeId) ?? null
 
   const handleBook = (prov: Provider, slot: string) => {
+    /* Prevent double-booking same provider + same slot */
+    if (bookings.some(b => b.provider.id === prov.id && b.slot === slot)) {
+      pushToast('You already booked this slot', 'error')
+      return
+    }
     const cg = GROUPS.find(g => g.id === prov.cat)
     addBooking({ id: Date.now(), provider: prov, slot, color: cg?.color ?? '', icon: cg?.icon ?? '' })
     pushToast(`Booked! ${prov.name} · ${slot}`)

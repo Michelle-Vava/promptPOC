@@ -1,3 +1,13 @@
+/**
+ * bookings-context.tsx — Global booking state (React Context).
+ *
+ * Stores confirmed bookings and waitlist entries in memory.
+ * Provides add/remove helpers consumed by map, services,
+ * activity, and provider screens.
+ *
+ * NOTE: State is ephemeral — resets on app restart.
+ * A production app would persist via AsyncStorage or a backend.
+ */
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import type { Booking, WaitlistEntry } from './data'
 

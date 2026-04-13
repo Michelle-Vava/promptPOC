@@ -1,16 +1,44 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'
-import { PROVIDERS, GROUPS, T } from '../../lib/data'
+import { PROVIDERS, GROUPS, HOURS, Provider, T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
+import { useBookings } from '../../lib/bookings-context'
 import { s, ms, vs } from '../../lib/scale'
+import ProviderPanel from '../../components/ProviderPanel'
+import Toast, { ToastData } from '../../components/Toast'
 
 export default function ServicesScreen() {
   const { tk } = useTheme()
   const insets = useSafeAreaInsets()
   const topPad = Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 0) : insets.top
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
+  const { bookings, addBooking } = useBookings()
+  const [toasts, setToasts] = useState<ToastData[]>([])
+
+  const pushToast = useCallback((message: string, type: ToastData['type'] = 'success') => {
+    setToasts(ts => [...ts, { id: Date.now(), message, type }])
+  }, [])
+  const dismissToast = useCallback((id: number) => {
+    setToasts(ts => ts.filter(t => t.id !== id))
+  }, [])
+
+  /* Pick first available slot as default hour for panel */
+  const defaultHour = selectedProvider?.slots[0] ?? HOURS[0]
+
+  const handleBook = (prov: Provider, slot: string) => {
+    /* Prevent double-booking same provider + slot */
+    if (bookings.some(b => b.provider.id === prov.id && b.slot === slot)) {
+      pushToast('Already booked this slot', 'error')
+      return
+    }
+    const cg = GROUPS.find(g => g.id === prov.cat)
+    addBooking({ id: Date.now(), provider: prov, slot, color: cg?.color ?? '', icon: cg?.icon ?? '' })
+    pushToast(`Booked! ${prov.name} · ${slot}`)
+    setTimeout(() => setSelectedProvider(null), 1200)
+  }
 
   const filtered = activeCategory
     ? PROVIDERS.filter(p => p.cat === activeCategory)
@@ -63,7 +91,7 @@ export default function ServicesScreen() {
         {filtered.map(p => {
           const g = GROUPS.find(gr => gr.id === p.cat)
           return (
-            <View key={p.id} style={[styles.card, { backgroundColor: tk.card, borderColor: tk.line }]}>
+            <Pressable key={p.id} onPress={() => setSelectedProvider(p)} style={[styles.card, { backgroundColor: tk.card, borderColor: tk.line }]}>
               <View style={[styles.cardIcon, { backgroundColor: (g?.color ?? T.accent) + '15' }]}>
                 <Feather name={(g?.icon ?? 'grid') as any} size={ms(20)} color={g?.color ?? T.accent} />
               </View>
@@ -88,10 +116,23 @@ export default function ServicesScreen() {
                 </View>
               </View>
               <Feather name="chevron-right" size={ms(18)} color={tk.muted} />
-            </View>
+            </Pressable>
           )
         })}
       </ScrollView>
+
+      {/* Provider booking panel */}
+      {selectedProvider && (
+        <ProviderPanel
+          provider={selectedProvider}
+          hour={defaultHour}
+          onBook={handleBook}
+          onClose={() => setSelectedProvider(null)}
+        />
+      )}
+
+      {/* Toasts */}
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </View>
   )
 }

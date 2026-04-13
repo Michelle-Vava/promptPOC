@@ -1,6 +1,13 @@
 /**
- * data.ts — Central data layer for Prompt (mobile).
- * Identical to web version — interfaces + mock data are platform-agnostic.
+ * data.ts — Central data layer for PROMPT mobile.
+ *
+ * Contains all TypeScript interfaces, mock provider data,
+ * category groups with distinct colours, time-slot constants,
+ * and notification mocks. Platform-agnostic — shared between
+ * web and mobile.
+ *
+ * Provider coverage: Halifax (25), Dartmouth (6), Bedford (5),
+ * Tantallon (4) — 40 providers total across HRM.
  */
 
 export interface Group {
@@ -51,13 +58,13 @@ export interface Notification {
 
 export const GROUPS: Group[] = [
   { id: 'hair',     icon: 'scissors',  label: 'Hair',     color: '#FF5C00' },
-  { id: 'repair',   icon: 'tool',      label: 'Repair',   color: '#FF5C00' },
-  { id: 'beauty',   icon: 'heart',     label: 'Beauty',   color: '#FF5C00' },
-  { id: 'wellness', icon: 'smile',     label: 'Wellness', color: '#FF5C00' },
-  { id: 'dining',   icon: 'coffee',    label: 'Dining',   color: '#FF5C00' },
-  { id: 'outdoor',  icon: 'sun',       label: 'Outdoor',  color: '#FF5C00' },
-  { id: 'stay',     icon: 'home',      label: 'Stay',     color: '#FF5C00' },
-  { id: 'doctor',   icon: 'activity',  label: 'Doctor',   color: '#FF5C00' },
+  { id: 'repair',   icon: 'tool',      label: 'Repair',   color: '#3B82F6' },
+  { id: 'beauty',   icon: 'heart',     label: 'Beauty',   color: '#EC4899' },
+  { id: 'wellness', icon: 'smile',     label: 'Wellness', color: '#8B5CF6' },
+  { id: 'dining',   icon: 'coffee',    label: 'Dining',   color: '#F59E0B' },
+  { id: 'outdoor',  icon: 'sun',       label: 'Outdoor',  color: '#10B981' },
+  { id: 'stay',     icon: 'home',      label: 'Stay',     color: '#06B6D4' },
+  { id: 'doctor',   icon: 'activity',  label: 'Doctor',   color: '#EF4444' },
 ]
 
 export const HOURS: string[] = [

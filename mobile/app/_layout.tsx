@@ -1,3 +1,22 @@
+/**
+ * _layout.tsx — Root layout for the entire Expo app.
+ *
+ * Wraps all screens with:
+ *  - ErrorBoundary for crash recovery
+ *  - GestureHandlerRootView for swipe/pan gestures
+ *  - ThemeProvider for dark/light mode (system default)
+ *  - BookingsProvider for shared booking state
+ *
+ * Route groups:
+ *  - splash → onboarding / landing
+ *  - auth → login / signup (customer or provider)
+ *  - (tabs) → customer bottom-tab navigator
+ *  - (provider-tabs) → provider bottom-tab navigator
+ *  - legal → terms, privacy, cookies
+ *
+ * Fonts: Sora (300–800) loaded via expo-google-fonts.
+ * Splash screen held until fonts are ready.
+ */
 import { useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -22,7 +41,6 @@ function InnerLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(provider-tabs)" />
         <Stack.Screen name="legal" />
-        <Stack.Screen name="profile" />
       </Stack>
     </>
   )
