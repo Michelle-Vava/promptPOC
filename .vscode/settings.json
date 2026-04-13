@@ -1,0 +1,16 @@
+{
+  // Disable SonarLint inline-style rule — styles are intentional design tokens
+  "sonarlint.rules": {
+    "javascript:S5416": { "level": "off" },
+    "typescript:S5416": { "level": "off" }
+  },
+  // Use the project's own eslint.config.js, not VS Code defaults
+  "eslint.useFlatConfig": true,
+  "eslint.experimental.useFlatConfig": true,
+  // Suppress CSS-in-JS warnings from the Stylelint extension if installed
+  "stylelint.enable": false,
+  // These file types use inline styles intentionally
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "never"
+  }
+}
