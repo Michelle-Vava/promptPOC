@@ -1,3 +1,10 @@
+/**
+ * _layout.tsx — Customer bottom tab navigator.
+ *
+ * Four visible tabs: Home (map), Services (list), Activity (bookings),
+ * Account (settings). Uses Feather icons with an orange active dot
+ * indicator and badge count on Activity tab.
+ */
 import { Tabs } from 'expo-router'
 import { View, Text, StyleSheet, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

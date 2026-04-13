@@ -19,6 +19,7 @@
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import { GROUPS, Provider } from '../lib/data'
+import { USER_LOCATION } from '../lib/geo'
 
 delete (L.Icon.Default.prototype as any)._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -31,6 +32,7 @@ interface LeafletMapProps {
   providers: Provider[]
   availableIds: Set<number>
   waitlistedIds: Set<number>
+  bookedIds?: Set<number>
   activeId: number | null
   onPinClick: (id: number) => void
   darkMode?: boolean
@@ -41,15 +43,16 @@ function createPinIcon(
   isActive: boolean,
   isAvailable: boolean,
   isWaitlisted: boolean,
+  isBooked: boolean = false,
 ): L.DivIcon {
   const cg = GROUPS.find(g => g.id === provider.cat)
-  const price = provider.price === 0 ? 'Free' : `$${provider.price}`
+  const price = isBooked ? 'Booked' : provider.price === 0 ? 'Free' : `$${provider.price}`
   const color = cg?.color ?? '#888'
 
-  const bg     = isActive ? '#0D0D0D' : '#ffffff'
-  const fg     = isActive ? '#ffffff' : '#0D0D0D'
-  const border = isActive ? color : isWaitlisted ? color : '#ffffff'
-  const opacity = isAvailable || isWaitlisted ? 1 : 0.35
+  const bg     = isBooked ? '#E0E0E0' : isActive ? '#0D0D0D' : '#ffffff'
+  const fg     = isBooked ? '#999' : isActive ? '#ffffff' : '#0D0D0D'
+  const border = isBooked ? '#ccc' : isActive ? color : isWaitlisted ? color : '#ffffff'
+  const opacity = isBooked ? 0.55 : (isAvailable || isWaitlisted) ? 1 : 0.35
   const shadow = isActive
     ? `0 3px 14px rgba(0,0,0,0.4), 0 0 0 2px ${color}50`
     : '0 2px 8px rgba(0,0,0,0.18)'
@@ -115,8 +118,22 @@ function createPinIcon(
   })
 }
 
+const userLocationIcon = L.divIcon({
+  html: `
+    <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:#3B82F6;animation:userPulse 1.8s ease-out infinite;"></div>
+      <div style="width:18px;height:18px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(59,130,246,.4);position:relative;z-index:1;">
+        <div style="width:10px;height:10px;border-radius:50%;background:#3B82F6;"></div>
+      </div>
+    </div>
+  `,
+  className: '',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+})
+
 export default function LeafletMap({
-  providers, availableIds, waitlistedIds, activeId, onPinClick, darkMode = false,
+  providers, availableIds, waitlistedIds, bookedIds = new Set(), activeId, onPinClick, darkMode = false,
 }: LeafletMapProps) {
   const tileUrl = darkMode
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -138,17 +155,23 @@ export default function LeafletMap({
       />
       {providers.map(p => (
         <Marker
-          key={`${p.id}-${p.id === activeId}-${waitlistedIds.has(p.id)}`}
+          key={`${p.id}-${p.id === activeId}-${waitlistedIds.has(p.id)}-${bookedIds.has(p.id)}`}
           position={[p.lat, p.lng]}
           icon={createPinIcon(
             p,
             p.id === activeId,
             availableIds.has(p.id),
             waitlistedIds.has(p.id),
+            bookedIds.has(p.id),
           )}
           eventHandlers={{ click: () => onPinClick(p.id) }}
         />
       ))}
+      <Marker
+        position={[USER_LOCATION.latitude, USER_LOCATION.longitude]}
+        icon={userLocationIcon}
+        interactive={false}
+      />
     </MapContainer>
   )
 }

@@ -34,6 +34,7 @@ export default function Shell({ children }: ShellProps) {
         @keyframes pulse       { 0%,100% { box-shadow:0 0 0 0 rgba(0,184,124,.5) } 60% { box-shadow:0 0 0 6px rgba(0,184,124,0) } }
         @keyframes shimmer     { 0% { background-position:-400px 0 } 100% { background-position:400px 0 } }
         @keyframes spin        { to { transform:rotate(360deg) } }
+        @keyframes userPulse   { 0% { transform:scale(1); opacity:0.4 } 100% { transform:scale(2.2); opacity:0 } }
       `}</style>
       {children}
     </div>

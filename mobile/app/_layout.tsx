@@ -25,6 +25,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { ThemeProvider, useTheme } from '../lib/theme'
 import { BookingsProvider } from '../lib/bookings-context'
+import { PickerStyleProvider } from '../lib/picker-style'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 SplashScreen.preventAutoHideAsync()
@@ -68,7 +69,9 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
           <BookingsProvider>
-            <InnerLayout />
+            <PickerStyleProvider>
+              <InnerLayout />
+            </PickerStyleProvider>
           </BookingsProvider>
         </ThemeProvider>
       </GestureHandlerRootView>

@@ -1,3 +1,4 @@
+/** CategoryBar — Horizontally scrollable category filter chips. */
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { GROUPS, T } from '../lib/data'
@@ -8,7 +9,8 @@ import Chip from './Chip'
 interface CategoryBarProps {
   category: string | null
   setCategory: (cat: string | null) => void
-  setActiveId: (id: number | null) => void
+  /** Optional — resets active pin when a category chip is tapped (map screen). */
+  setActiveId?: (id: number | null) => void
 }
 
 export default function CategoryBar({ category, setCategory, setActiveId }: CategoryBarProps) {
@@ -23,7 +25,7 @@ export default function CategoryBar({ category, setCategory, setActiveId }: Cate
         <Chip
           active={!category}
           color={T.accent}
-          onPress={() => { setCategory(null); setActiveId(null) }}
+          onPress={() => { setCategory(null); setActiveId?.(null) }}
         >
           All
         </Chip>
@@ -32,7 +34,7 @@ export default function CategoryBar({ category, setCategory, setActiveId }: Cate
             key={g.id}
             active={category === g.id}
             color={g.color}
-            onPress={() => { setCategory(category === g.id ? null : g.id); setActiveId(null) }}
+            onPress={() => { setCategory(category === g.id ? null : g.id); setActiveId?.(null) }}
           >
             <Feather name={g.icon as any} size={12} color={category === g.id ? tk.text : tk.muted} /> {g.label}
           </Chip>

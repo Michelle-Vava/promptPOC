@@ -141,3 +141,25 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: 4, type: 'booking_confirmed',  message: 'Walk-In Clinic HFX confirmed your 10 AM slot',         time: '3 hrs ago',  read: true  },
   { id: 5, type: 'waitlist_opened',    message: 'Glow Bar has a new 4 PM opening today',                time: 'Yesterday',  read: true  },
 ]
+
+export interface PastBooking {
+  id: number
+  provider: Provider
+  slot: string
+  date: string
+  category: string
+  categoryColor: string
+  categoryIcon: string
+  status: 'completed' | 'cancelled'
+}
+
+export const MOCK_PAST_BOOKINGS: PastBooking[] = [
+  { id: 101, provider: PROVIDERS[0],  slot: '11 AM', date: 'Apr 10, 2026', category: 'Hair',     categoryColor: '#FF5C00', categoryIcon: 'scissors', status: 'completed' },
+  { id: 102, provider: PROVIDERS[5],  slot: '2 PM',  date: 'Apr 8, 2026',  category: 'Beauty',   categoryColor: '#EC4899', categoryIcon: 'heart',    status: 'completed' },
+  { id: 103, provider: PROVIDERS[10], slot: '10 AM', date: 'Apr 6, 2026',  category: 'Dining',   categoryColor: '#F59E0B', categoryIcon: 'coffee',   status: 'completed' },
+  { id: 104, provider: PROVIDERS[2],  slot: '3 PM',  date: 'Apr 4, 2026',  category: 'Hair',     categoryColor: '#FF5C00', categoryIcon: 'scissors', status: 'cancelled' },
+  { id: 105, provider: PROVIDERS[15], slot: '1 PM',  date: 'Apr 2, 2026',  category: 'Wellness', categoryColor: '#8B5CF6', categoryIcon: 'smile',    status: 'completed' },
+  { id: 106, provider: PROVIDERS[8],  slot: '4 PM',  date: 'Mar 30, 2026', category: 'Repair',   categoryColor: '#3B82F6', categoryIcon: 'tool',     status: 'completed' },
+  { id: 107, provider: PROVIDERS[20], slot: '9 AM',  date: 'Mar 28, 2026', category: 'Outdoor',  categoryColor: '#10B981', categoryIcon: 'sun',      status: 'completed' },
+  { id: 108, provider: PROVIDERS[12], slot: '5 PM',  date: 'Mar 25, 2026', category: 'Dining',   categoryColor: '#F59E0B', categoryIcon: 'coffee',   status: 'completed' },
+]

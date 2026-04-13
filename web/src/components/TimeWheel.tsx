@@ -13,6 +13,7 @@
  */
 import { useRef, useEffect, useCallback } from 'react'
 import { HOURS, T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface TimeWheelProps {
   hourIdx: number
@@ -20,6 +21,8 @@ interface TimeWheelProps {
 }
 
 export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
+  const { mode } = useTheme()
+  const dark = mode === 'dark'
   const dragging = useRef(false)
   const startY = useRef(0)
   const startIdx = useRef(0)
@@ -66,14 +69,14 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
       }}
     >
       <div style={{
-        background: 'rgba(8,8,8,.95)', borderRadius: 22, padding: '12px 8px',
+        background: dark ? 'rgba(8,8,8,.95)' : 'rgba(255,255,255,.95)', borderRadius: 22, padding: '12px 8px',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,.14)', width: 72,
+        border: dark ? '1px solid rgba(255,255,255,.14)' : '1px solid rgba(0,0,0,.1)', width: 72,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        boxShadow: '0 4px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04)',
+        boxShadow: dark ? '0 4px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04)' : '0 4px 24px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04)',
       }}>
         <svg width="10" height="6" viewBox="0 0 10 6" style={{ marginBottom: 8, opacity: .22 }}>
-          <path d="M1 5L5 1L9 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M1 5L5 1L9 5" stroke={dark ? 'white' : '#666'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
 
         {([-2, -1, 0, 1, 2] as const).map(off => {
@@ -90,8 +93,8 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
                 padding: cur ? '10px 4px' : '5px 4px',
                 fontSize: cur ? 14 : d === 1 ? 11 : 9,
                 fontWeight: cur ? 800 : 400,
-                color: cur ? '#fff' : `rgba(255,255,255,${d === 1 ? .28 : .1})`,
-                background: cur ? 'rgba(255,255,255,.09)' : 'transparent',
+                color: cur ? (dark ? '#fff' : '#0D0D0D') : (dark ? `rgba(255,255,255,${d === 1 ? .28 : .1})` : `rgba(0,0,0,${d === 1 ? .3 : .12})`),
+                background: cur ? (dark ? 'rgba(255,255,255,.09)' : 'rgba(0,0,0,.07)') : 'transparent',
                 borderRadius: 9,
                 cursor: ok ? 'pointer' : 'default',
                 lineHeight: 1.1,
@@ -106,7 +109,7 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
         })}
 
         <svg width="10" height="6" viewBox="0 0 10 6" style={{ marginTop: 8, opacity: .22, transform: 'rotate(180deg)' }}>
-          <path d="M1 5L5 1L9 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M1 5L5 1L9 5" stroke={dark ? 'white' : '#666'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
 

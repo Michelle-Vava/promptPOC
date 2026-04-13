@@ -1,11 +1,23 @@
-import { useState, useMemo } from 'react'
+/**
+ * activity.tsx — Customer booking activity screen.
+ *
+ * Two view modes toggled via a pill in the header:
+ *  - List view: confirmed bookings + waitlisted entries with dates
+ *  - Calendar view: month grid with dots on days that have bookings,
+ *    tap a day to see that day's appointments
+ *
+ * Cancellation requires confirmation via Alert.alert with a
+ * warning about provider impact.
+ */
+import { useState, useMemo, useEffect } from 'react'
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'
-import { T } from '../../lib/data'
+import { T, MOCK_PAST_BOOKINGS, PastBooking } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
 import { useBookings } from '../../lib/bookings-context'
 import { s, ms, vs } from '../../lib/scale'
+import Skeleton from '../../components/Skeleton'
 
 /* ── calendar helpers ── */
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -22,13 +34,20 @@ export default function ActivityScreen() {
   const { tk } = useTheme()
   const insets = useSafeAreaInsets()
   const topPad = Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 0) : insets.top
-  const { bookings, waitlisted, removeBooking, removeWaitlist } = useBookings()
+  const { bookings, waitlisted, removeBooking, removeWaitlist, addBooking } = useBookings()
 
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [loading, setLoading] = useState(true)
   const today = useMemo(() => new Date(), [])
   const [calYear, setCalYear] = useState(today.getFullYear())
   const [calMonth, setCalMonth] = useState(today.getMonth())
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+
+  /* Simulate initial data fetch */
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 500)
+    return () => clearTimeout(t)
+  }, [])
 
   /* mock dates for calendar dots – spread bookings across nearby days */
   const bookingDates = useMemo(() => {
@@ -75,6 +94,21 @@ export default function ActivityScreen() {
   }
 
   const isEmpty = bookings.length === 0 && waitlisted.length === 0
+
+  const handleRebook = (past: PastBooking) => {
+    if (bookings.some(b => b.provider.id === past.provider.id && b.slot === past.slot)) {
+      Alert.alert('Already Booked', `You already have a booking with ${past.provider.name} at ${past.slot}`)
+      return
+    }
+    addBooking({
+      id: Date.now(),
+      provider: past.provider,
+      slot: past.slot,
+      color: past.categoryColor,
+      icon: past.categoryIcon,
+    })
+    Alert.alert('Rebooked!', `${past.provider.name} at ${past.slot} has been booked again.`)
+  }
 
   /* ── calendar grid ── */
   const totalDays = daysInMonth(calYear, calMonth)
@@ -150,20 +184,36 @@ export default function ActivityScreen() {
 
       <ScrollView
         style={[styles.scroll, { backgroundColor: tk.bg }]}
-        contentContainerStyle={[styles.scrollContent, isEmpty && viewMode === 'list' && styles.emptyContent]}
+        contentContainerStyle={[styles.scrollContent, isEmpty && viewMode === 'list' && !loading && styles.emptyContent]}
         showsVerticalScrollIndicator={false}
       >
-        {viewMode === 'list' ? (
+        {loading ? (
+          /* ── SKELETON LOADING ── */
+          <View style={{ gap: vs(10) }}>
+            <Skeleton width={s(80)} height={ms(10)} borderRadius={s(4)} />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <View key={i} style={[styles.card, { backgroundColor: tk.card, borderLeftColor: tk.line }]}>
+                <Skeleton width={s(40)} height={s(40)} borderRadius={s(12)} />
+                <View style={[styles.cardBody, { gap: vs(8) }]}>
+                  <Skeleton width={s(130)} height={ms(14)} borderRadius={s(4)} />
+                  <Skeleton width={s(90)} height={ms(11)} borderRadius={s(4)} />
+                  <Skeleton width={s(160)} height={ms(11)} borderRadius={s(4)} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : viewMode === 'list' ? (
           /* ── LIST VIEW ── */
-          isEmpty ? (
-            <View style={styles.emptyState}>
-              <Feather name="calendar" size={40} color={tk.muted} style={{ marginBottom: vs(16) }} />
-              <Text style={[styles.emptyTitle, { color: tk.text }]}>No activity yet</Text>
-              <Text style={[styles.emptyDesc, { color: tk.muted }]}>
-                Book a service from the map to see{'\n'}your upcoming appointments here
-              </Text>
-            </View>
-          ) : (
+          <>
+            {isEmpty ? (
+              <View style={[styles.emptyState, { paddingVertical: vs(30) }]}>
+                <Feather name="calendar" size={40} color={tk.muted} style={{ marginBottom: vs(16) }} />
+                <Text style={[styles.emptyTitle, { color: tk.text }]}>No upcoming bookings</Text>
+                <Text style={[styles.emptyDesc, { color: tk.muted }]}>
+                  Book a service from the map to see{'\n'}your upcoming appointments here
+                </Text>
+              </View>
+            ) : (
             <>
               {bookings.length > 0 && (
                 <View style={styles.section}>
@@ -177,8 +227,42 @@ export default function ActivityScreen() {
                   {waitlisted.map(w => renderCard(w as any, true))}
                 </View>
               )}
+
+              {/* Past bookings — always visible */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionLabel, { color: tk.muted }]}>HISTORY</Text>
+                {MOCK_PAST_BOOKINGS.map(pb => (
+                  <View key={pb.id} style={[styles.card, {
+                    backgroundColor: tk.card,
+                    borderLeftColor: pb.status === 'cancelled' ? tk.muted : pb.categoryColor,
+                    opacity: pb.status === 'cancelled' ? 0.6 : 1,
+                  }]}>
+                    <View style={[styles.cardLeft, { backgroundColor: tk.surface }]}>
+                      <Feather name={pb.categoryIcon as any} size={ms(18)} color={pb.categoryColor} />
+                    </View>
+                    <View style={styles.cardBody}>
+                      <Text style={[styles.cardProvider, { color: tk.text }]}>{pb.provider.name}</Text>
+                      <Text style={[styles.cardDate, { color: pb.categoryColor }]}>{pb.date}</Text>
+                      <Text style={[styles.cardDetail, { color: tk.muted }]}>
+                        {pb.slot} · {pb.category}{pb.status === 'cancelled' ? ' · Cancelled' : ''}
+                      </Text>
+                      <Text style={[styles.cardAddr, { color: tk.muted }]}>{pb.provider.addr}</Text>
+                    </View>
+                    {pb.status === 'completed' && (
+                      <Pressable
+                        onPress={() => handleRebook(pb)}
+                        style={[styles.rebookBtn, { backgroundColor: T.accent + '12', borderColor: T.accent + '30' }]}
+                      >
+                        <Feather name="rotate-cw" size={ms(12)} color={T.accent} />
+                        <Text style={[styles.rebookText, { color: T.accent }]}>Rebook</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              </View>
             </>
-          )
+            )}
+          </>
         ) : (
           /* ── CALENDAR VIEW ── */
           <>
@@ -419,5 +503,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Sora_400Regular',
     textAlign: 'center',
     paddingVertical: vs(20),
+  },
+  rebookBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(4),
+    paddingVertical: vs(6),
+    paddingHorizontal: s(10),
+    borderRadius: s(8),
+    borderWidth: 1,
+  },
+  rebookText: {
+    fontSize: ms(11),
+    fontFamily: 'Sora_700Bold',
   },
 })

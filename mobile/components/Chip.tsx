@@ -1,3 +1,4 @@
+/** Chip — Small pressable pill used for filter toggles and tags. */
 import { Pressable, Text, StyleSheet } from 'react-native'
 import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'

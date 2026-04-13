@@ -1,17 +1,25 @@
+/**
+ * MapPin — Animated map marker for provider locations.
+ * Green pulse = available, scale bounce on press.
+ * Uses staggered entrance animation based on pin index.
+ */
 import { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
 import { Marker } from 'react-native-maps'
 import { Feather } from '@expo/vector-icons'
 import { GROUPS, Provider, T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface MapPinProps {
   provider: Provider
   isActive: boolean
+  isBooked?: boolean
   index?: number
   onPress: () => void
 }
 
-export default function MapPin({ provider, isActive, index = 0, onPress }: MapPinProps) {
+export default function MapPin({ provider, isActive, isBooked = false, index = 0, onPress }: MapPinProps) {
+  const { mode } = useTheme()
   const pulseAnim = useRef(new Animated.Value(1)).current
   const entranceAnim = useRef(new Animated.Value(0)).current
 
@@ -50,22 +58,23 @@ export default function MapPin({ provider, isActive, index = 0, onPress }: MapPi
       tracksViewChanges={false}
     >
       <Animated.View style={[styles.pin, {
-        opacity: entranceAnim,
-        borderColor: isActive ? T.accent : 'rgba(255,255,255,0.15)',
+        backgroundColor: isBooked ? (mode === 'dark' ? '#2A2A2A' : '#E8E8E8') : (mode === 'dark' ? '#1A1A1A' : '#FFFFFF'),
+        opacity: isBooked ? Animated.multiply(entranceAnim, new Animated.Value(0.55)) : entranceAnim,
+        borderColor: isBooked ? (mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)') : isActive ? T.accent : (mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'),
         transform: [
           { scale: Animated.multiply(isActive ? 1.1 : pulseAnim, entranceAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] })) },
         ],
       }]}>
         {/* Price */}
-        <View style={[styles.priceRow, { backgroundColor: isActive ? T.accent : T.green }]}>
+        <View style={[styles.priceRow, { backgroundColor: isBooked ? '#888' : isActive ? T.accent : T.green }]}>
           <Text style={[styles.priceText, { color: '#fff' }]}>
-            {provider.price === 0 ? 'Free' : `$${provider.price}`}
+            {isBooked ? 'Booked' : provider.price === 0 ? 'Free' : `$${provider.price}`}
           </Text>
         </View>
 
         {/* Bottom row */}
         <View style={styles.bottomRow}>
-          <Text style={[styles.rating, { color: isActive ? T.accent : 'rgba(255,255,255,0.6)' }]}>
+          <Text style={[styles.rating, { color: isActive ? T.accent : (mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)') }]}>
             ★ {provider.rating}
           </Text>
 
@@ -85,7 +94,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderRadius: 12,
-    backgroundColor: '#1A1A1A',
     overflow: 'hidden',
     minWidth: 52,
     shadowColor: '#000',

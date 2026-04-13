@@ -1,3 +1,11 @@
+/**
+ * account.tsx — Provider account screen.
+ *
+ * Sections: business info card (name, category, address, rating),
+ * payment method, billing history with monthly totals,
+ * role switch back to customer, settings (notifications, theme),
+ * legal links, and logout.
+ */
 import { useState } from 'react'
 import { View, Text, Pressable, ScrollView, Switch, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

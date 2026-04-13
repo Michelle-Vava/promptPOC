@@ -1,10 +1,11 @@
 /**
  * AuthInput — Styled text/email/password input for the Auth screen.
  *
- * Always dark (used on the dark auth screen only).
+ * Theme-aware — adapts to light/dark mode using theme tokens.
  * Border brightens on focus to give feedback without outline rings.
  */
 import { T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface AuthInputProps {
   label: string
@@ -13,13 +14,15 @@ interface AuthInputProps {
 }
 
 export default function AuthInput({ label, placeholder, type = 'text' }: AuthInputProps) {
+  const { tk } = useTheme()
+
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{
         display: 'block',
         fontSize: 10,
         fontWeight: 700,
-        color: 'rgba(255,255,255,.32)',
+        color: tk.muted,
         marginBottom: 7,
         letterSpacing: '1.2px',
         textTransform: 'uppercase',
@@ -33,16 +36,16 @@ export default function AuthInput({ label, placeholder, type = 'text' }: AuthInp
           width: '100%',
           padding: '13px 15px',
           borderRadius: 11,
-          border: '1.5px solid rgba(255,255,255,.1)',
-          background: 'rgba(255,255,255,.06)',
-          color: T.white,
+          border: `1.5px solid ${tk.inputBorder}`,
+          background: tk.inputBg,
+          color: tk.text,
           fontSize: 14,
           fontFamily: 'Sora,system-ui',
           outline: 'none',
           transition: 'border .15s',
         }}
-        onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,.28)')}
-        onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,.1)')}
+        onFocus={e => (e.target.style.borderColor = tk.sub)}
+        onBlur={e => (e.target.style.borderColor = tk.inputBorder)}
       />
     </div>
   )

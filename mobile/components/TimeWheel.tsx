@@ -1,7 +1,13 @@
+/**
+ * TimeWheel — Draggable time selector overlaid on the map.
+ * Vertical drag gesture maps to hour index changes.
+ * Positioned at right edge with current hour display.
+ */
 import { useRef } from 'react'
 import { View, Text, Pressable, StyleSheet, PanResponder } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { HOURS, T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface TimeWheelProps {
   hourIdx: number
@@ -9,6 +15,8 @@ interface TimeWheelProps {
 }
 
 export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
+  const { mode } = useTheme()
+  const dark = mode === 'dark'
   const startIdx = useRef(hourIdx)
   const startY = useRef(0)
 
@@ -28,8 +36,11 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.wheel} {...panResponder.panHandlers}>
-        <Feather name="chevron-up" size={14} color="rgba(255,255,255,0.4)" />
+      <View style={[styles.wheel, {
+        backgroundColor: dark ? 'rgba(8,8,8,0.95)' : 'rgba(255,255,255,0.95)',
+        borderColor: dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)',
+      }]} {...panResponder.panHandlers}>
+        <Feather name="chevron-up" size={14} color={dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)'} />
 
         {([-2, -1, 0, 1, 2] as const).map(off => {
           const i = hourIdx + off
@@ -40,12 +51,18 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
             <Pressable
               key={off}
               onPress={() => ok && setHourIdx(i)}
-              style={[styles.slot, cur && styles.slotActive, { paddingVertical: cur ? 10 : 5 }]}
+              style={[styles.slot, cur && [styles.slotActive, {
+                backgroundColor: dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
+              }], { paddingVertical: cur ? 10 : 5 }]}
             >
               <Text style={[styles.slotText, {
                 fontSize: cur ? 14 : d === 1 ? 11 : 9,
                 fontFamily: cur ? 'Sora_800ExtraBold' : 'Sora_400Regular',
-                color: cur ? '#fff' : `rgba(255,255,255,${d === 1 ? 0.28 : 0.1})`,
+                color: cur
+                  ? (dark ? '#fff' : '#0D0D0D')
+                  : dark
+                    ? `rgba(255,255,255,${d === 1 ? 0.28 : 0.1})`
+                    : `rgba(0,0,0,${d === 1 ? 0.25 : 0.08})`,
               }]}>
                 {ok ? HOURS[i] : ''}
               </Text>
@@ -53,7 +70,7 @@ export default function TimeWheel({ hourIdx, setHourIdx }: TimeWheelProps) {
           )
         })}
 
-        <Feather name="chevron-down" size={14} color="rgba(255,255,255,0.4)" />
+        <Feather name="chevron-down" size={14} color={dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)'} />
       </View>
 
       <View style={styles.dot} />
@@ -71,12 +88,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   wheel: {
-    backgroundColor: 'rgba(8,8,8,0.95)',
     borderRadius: 22,
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
     width: 72,
     alignItems: 'center',
   },

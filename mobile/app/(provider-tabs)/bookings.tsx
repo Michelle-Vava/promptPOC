@@ -1,3 +1,10 @@
+/**
+ * bookings.tsx — Provider bookings & billing history.
+ *
+ * Shows today's confirmed bookings with green badges, a history
+ * section with amounts and completed indicators, and a monthly
+ * revenue total card.
+ */
 import { View, Text, ScrollView, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'

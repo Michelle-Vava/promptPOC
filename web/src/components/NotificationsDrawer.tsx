@@ -51,14 +51,14 @@ export default function NotificationsDrawer({ notifications, onMarkAllRead, onCl
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
             style={{ width: 380, background: tk.bg, height: '100%', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,.2)' }}
           >
-            <div style={{ background: T.ink, padding: '28px 24px 22px' }}>
+            <div style={{ background: tk.surface, padding: '28px 24px 22px', borderBottom: `1px solid ${tk.line}` }}>
               <button type="button" onClick={onClose} aria-label="Close" style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,.4)',
+                background: 'none', border: 'none', color: tk.muted,
                 fontSize: 22, cursor: 'pointer', display: 'block', marginBottom: 12, fontFamily: 'inherit',
               }}>×</button>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: T.white, letterSpacing: '-0.5px', fontFamily: 'Sora,system-ui' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: tk.text, letterSpacing: '-0.5px', fontFamily: 'Sora,system-ui' }}>
                     Notifications
                   </div>
                   {unread > 0 && (
@@ -68,8 +68,8 @@ export default function NotificationsDrawer({ notifications, onMarkAllRead, onCl
                 {unread > 0 && (
                   <button type="button" onClick={onMarkAllRead} style={{
                     padding: '7px 14px', borderRadius: 20,
-                    background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)',
-                    color: 'rgba(255,255,255,.5)', fontSize: 11, fontWeight: 600,
+                    background: tk.inputBg, border: `1px solid ${tk.inputBorder}`,
+                    color: tk.muted, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'Sora,system-ui',
                   }}>Mark all read</button>
                 )}

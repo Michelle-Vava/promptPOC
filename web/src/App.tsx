@@ -15,8 +15,9 @@ import Auth from './screens/Auth'
 import MapScreen from './screens/MapScreen'
 import ProviderDashboard from './screens/ProviderDashboard'
 import ProfileScreen from './screens/ProfileScreen'
+import ServicesScreen from './screens/ServicesScreen'
 
-type Screen = 'splash' | 'auth' | 'map' | 'provider' | 'profile'
+type Screen = 'splash' | 'auth' | 'map' | 'provider' | 'profile' | 'services'
 type Role = 'customer' | 'provider'
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
         <MapScreen
           onSwitchToProvider={() => setScreen('provider')}
           onNavigateToProfile={() => setScreen('profile')}
+          onNavigateToServices={() => setScreen('services')}
         />
       )}
       {screen === 'provider' && (
@@ -51,6 +53,13 @@ export default function App() {
         <ProfileScreen
           onBack={() => setScreen('map')}
           onSignOut={() => setScreen('splash')}
+          onSwitchToProvider={() => setScreen('provider')}
+        />
+      )}
+      {screen === 'services' && (
+        <ServicesScreen
+          onBack={() => setScreen('map')}
+          onNavigateToProfile={() => setScreen('profile')}
         />
       )}
     </ThemeProvider>

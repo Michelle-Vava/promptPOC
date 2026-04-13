@@ -7,6 +7,7 @@
  * The color prop comes from GROUPS[n].color in data.ts.
  */
 import { T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface ChipProps {
   active: boolean
@@ -16,6 +17,7 @@ interface ChipProps {
 }
 
 export default function Chip({ active, color, onClick, children }: ChipProps) {
+  const { tk } = useTheme()
   return (
     <button
       type="button"
@@ -27,13 +29,13 @@ export default function Chip({ active, color, onClick, children }: ChipProps) {
         gap: 6,
         padding: '7px 14px',
         borderRadius: 20,
-        border: active ? `1.5px solid ${color}38` : '1.5px solid rgba(255,255,255,.1)',
+        border: active ? `1.5px solid ${color}38` : `1.5px solid ${tk.line}`,
         fontSize: 12,
         fontWeight: 700,
         whiteSpace: 'nowrap',
         cursor: 'pointer',
-        background: active ? color : 'rgba(255,255,255,.07)',
-        color: active ? T.ink : 'rgba(255,255,255,.45)',
+        background: active ? color : tk.inputBg,
+        color: active ? T.white : tk.muted,
         boxShadow: active ? `0 2px 14px ${color}40` : 'none',
         transition: 'all .15s',
         fontFamily: 'Sora,system-ui',

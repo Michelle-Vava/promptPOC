@@ -1,9 +1,20 @@
+/**
+ * splash.tsx — Onboarding / landing screen.
+ *
+ * Shows a cinematic hero with live clock, provider count,
+ * and staggered entrance animations. Two CTAs:
+ *  - "See who's open" → auth as customer
+ *  - "I'm a provider" → auth as provider
+ *
+ * Animations: Animated.sequence with pill fade, hero spring, CTA fade.
+ */
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, Pressable, Animated, StyleSheet, Dimensions } from 'react-native'
-import { useRouter } from 'expo-router'
+import { View, Text, Pressable, Animated, Dimensions, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
-import { PROVIDERS, T } from '../lib/data'
+import { PROVIDERS, GROUPS, T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 import { s, ms, vs } from '../lib/scale'
 
 const { height: SH } = Dimensions.get('window')
@@ -23,6 +34,7 @@ function useLiveClock() {
 export default function Splash() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { tk, mode } = useTheme()
   const clock = useLiveClock()
   const liveCount = PROVIDERS.length
 
@@ -46,17 +58,17 @@ export default function Splash() {
   }, [])
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { backgroundColor: tk.bg, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* Live pill — FIRST thing, prominent */}
       <Animated.View style={[styles.livePill, { opacity: pillFade }]}>
         <View style={styles.liveDot} />
-        <Text style={styles.liveText}>Live in Halifax, NS</Text>
-        <Text style={styles.liveClock}>{clock}</Text>
+        <Text style={[styles.liveText, { color: tk.muted }]}>Live in Halifax, NS</Text>
+        <Text style={[styles.liveClock, { color: tk.muted }]}>{clock}</Text>
       </Animated.View>
 
       {/* Hero heading — billboard, fills the screen */}
       <Animated.View style={{ opacity: fadeIn, transform: [{ translateY: slideUp }] }}>
-        <Text style={styles.heading}>
+        <Text style={[styles.heading, { color: tk.text }]}>
           Right now{'\n'}
           in <Text style={{ color: T.accent }}>Halifax</Text>
         </Text>
@@ -64,9 +76,31 @@ export default function Splash() {
 
       {/* Single line subtext */}
       <Animated.View style={{ opacity: fadeIn, transform: [{ translateY: slideUp }] }}>
-        <Text style={styles.subtitle}>
-          {liveCount} providers open · Same-day bookings · Free
+        <Text style={[styles.subtitle, { color: tk.muted }]}>
+          Same-day bookings. Customers pay $0.{'\n'}Providers pay $1. That's it.
         </Text>
+      </Animated.View>
+
+      {/* Traction stats */}
+      <Animated.View style={[styles.tractionRow, { opacity: fadeIn }]}>
+        <View style={[styles.tractionPill, { backgroundColor: `${T.green}15`, borderColor: `${T.green}30` }]}>
+          <Text style={[styles.tractionNum, { color: T.green }]}>847</Text>
+          <Text style={[styles.tractionLabel, { color: tk.muted }]}>bookings this week</Text>
+        </View>
+        <View style={[styles.tractionPill, { backgroundColor: `${T.accent}15`, borderColor: `${T.accent}30` }]}>
+          <Text style={[styles.tractionNum, { color: T.accent }]}>{liveCount}</Text>
+          <Text style={[styles.tractionLabel, { color: tk.muted }]}>providers live</Text>
+        </View>
+      </Animated.View>
+
+      {/* Category icons */}
+      <Animated.View style={[styles.catGrid, { opacity: fadeIn }]}>
+        {GROUPS.slice(0, 6).map(g => (
+          <View key={g.id} style={[styles.catChip, { backgroundColor: `${g.color}12`, borderColor: `${g.color}25` }]}>
+            <Text style={{ fontSize: ms(14) }}>{g.icon}</Text>
+            <Text style={[styles.catLabel, { color: g.color }]}>{g.label}</Text>
+          </View>
+        ))}
       </Animated.View>
 
       {/* Spacer pushes CTA to comfortable thumb zone */}
@@ -86,13 +120,13 @@ export default function Splash() {
           style={({ pressed }) => [styles.providerLink, pressed && { opacity: 0.6 }]}
           onPress={() => router.push({ pathname: '/auth', params: { role: 'provider' } })}
         >
-          <Text style={styles.providerLinkText}>I'm a provider</Text>
-          <Feather name="arrow-right" size={ms(13)} color="rgba(255,255,255,0.3)" />
+          <Text style={[styles.providerLinkText, { color: tk.muted }]}>I'm a provider</Text>
+          <Feather name="arrow-right" size={ms(13)} color={tk.muted} />
         </Pressable>
       </Animated.View>
 
       {/* Footer */}
-      <Text style={styles.footer}>© {new Date().getFullYear()} Prompt Technologies Inc.</Text>
+      <Text style={[styles.footer, { color: tk.muted }]}>© {new Date().getFullYear()} Prompt Technologies Inc.</Text>
     </View>
   )
 }
@@ -151,6 +185,51 @@ const styles = StyleSheet.create({
     fontFamily: 'Sora_400Regular',
     color: 'rgba(255,255,255,0.3)',
     lineHeight: ms(22),
+  },
+
+  // Traction stats
+  tractionRow: {
+    flexDirection: 'row',
+    gap: s(10),
+    marginTop: vs(20),
+  },
+  tractionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(6),
+    paddingVertical: vs(6),
+    paddingHorizontal: s(12),
+    borderRadius: s(10),
+    borderWidth: 1,
+  },
+  tractionNum: {
+    fontSize: ms(15),
+    fontFamily: 'Sora_800ExtraBold',
+  },
+  tractionLabel: {
+    fontSize: ms(11),
+    fontFamily: 'Sora_400Regular',
+  },
+
+  // Category grid
+  catGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: s(8),
+    marginTop: vs(20),
+  },
+  catChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(5),
+    paddingVertical: vs(5),
+    paddingHorizontal: s(11),
+    borderRadius: s(10),
+    borderWidth: 1,
+  },
+  catLabel: {
+    fontSize: ms(11),
+    fontFamily: 'Sora_700Bold',
   },
 
   // CTA

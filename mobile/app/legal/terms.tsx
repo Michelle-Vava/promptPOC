@@ -1,8 +1,8 @@
+/** terms.tsx — Terms of Service screen (9 sections). */
 import { View, Text, ScrollView, Pressable, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
-import { T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
 import { s, ms, vs } from '../../lib/scale'
 

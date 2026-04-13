@@ -18,18 +18,21 @@ interface ProviderPanelProps {
   hour: string
   onBook: (provider: Provider, hour: string) => void
   onClose: () => void
+  alreadyBooked?: boolean
 }
 
-export default function ProviderPanel({ provider, hour, onBook, onClose }: ProviderPanelProps) {
+export default function ProviderPanel({ provider, hour, onBook, onClose, alreadyBooked = false }: ProviderPanelProps) {
   const { tk } = useTheme()
   const translateY = useRef(new Animated.Value(SCREEN_H)).current
   const [done, setDone] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const isOpen = !!provider
 
   useEffect(() => {
     if (isOpen) {
       setDone(false)
+      setLoading(false)
     }
     Animated.spring(translateY, {
       toValue: isOpen ? 0 : SCREEN_H,
@@ -44,9 +47,13 @@ export default function ProviderPanel({ provider, hour, onBook, onClose }: Provi
   const cg = GROUPS.find(g => g.id === provider.cat)
 
   const handleBook = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    setDone(true)
-    setTimeout(() => onBook(provider, hour), 900)
+    setLoading(true)
+    setTimeout(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      setLoading(false)
+      setDone(true)
+      setTimeout(() => onBook(provider, hour), 900)
+    }, 1200)
   }
 
   return (
@@ -62,9 +69,9 @@ export default function ProviderPanel({ provider, hour, onBook, onClose }: Provi
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Dark header */}
-            <View style={styles.header}>
-              <Pressable onPress={onClose} style={styles.closeBtn}>
-                <Text style={styles.closeBtnText}>×</Text>
+            <View style={[styles.header, { backgroundColor: tk.text }]}>
+              <Pressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: tk.line }]}>
+                <Text style={[styles.closeBtnText, { color: tk.muted }]}>×</Text>
               </Pressable>
 
               <View style={styles.headerRow}>
@@ -73,31 +80,31 @@ export default function ProviderPanel({ provider, hour, onBook, onClose }: Provi
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.nameRow}>
-                    <Text style={styles.provName}>{provider.name}</Text>
+                    <Text style={[styles.provName, { color: tk.bg }]}>{provider.name}</Text>
                     {provider.badge && (
                       <View style={[styles.badgePill, { backgroundColor: cg?.color + '30' }]}>
                         <Text style={[styles.badgeText, { color: cg?.color }]}>{provider.badge}</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={styles.addr}>{provider.addr}</Text>
+                  <Text style={[styles.addr, { color: tk.bg + '66' }]}>{provider.addr}</Text>
                   <View style={styles.ratingRow}>
                     <Text style={{ color: '#FFA500' }}>{'★'.repeat(Math.floor(provider.rating))}</Text>
-                    <Text style={styles.ratingNum}>{provider.rating}</Text>
-                    <Text style={styles.reviewCount}>({provider.reviews})</Text>
+                    <Text style={[styles.ratingNum, { color: tk.bg + 'B3' }]}>{provider.rating}</Text>
+                    <Text style={[styles.reviewCount, { color: tk.bg + '4D' }]}>({provider.reviews})</Text>
                   </View>
                 </View>
               </View>
 
               {/* Price / duration pills */}
               <View style={styles.pillRow}>
-                <View style={styles.infoPill}>
-                  <Feather name="credit-card" size={14} color="rgba(255,255,255,0.5)" />
-                  <Text style={styles.pillValue}>{provider.price === 0 ? 'Free' : `$${provider.price}`}</Text>
+                <View style={[styles.infoPill, { backgroundColor: tk.bg + '12', borderColor: tk.bg + '10' }]}>
+                  <Feather name="credit-card" size={14} color={tk.bg + '80'} />
+                  <Text style={[styles.pillValue, { color: tk.bg }]}>{provider.price === 0 ? 'Free' : `$${provider.price}`}</Text>
                 </View>
-                <View style={styles.infoPill}>
-                  <Feather name="clock" size={14} color="rgba(255,255,255,0.5)" />
-                  <Text style={styles.pillValue}>{provider.dur}</Text>
+                <View style={[styles.infoPill, { backgroundColor: tk.bg + '12', borderColor: tk.bg + '10' }]}>
+                  <Feather name="clock" size={14} color={tk.bg + '80'} />
+                  <Text style={[styles.pillValue, { color: tk.bg }]}>{provider.dur}</Text>
                 </View>
               </View>
             </View>
@@ -148,12 +155,27 @@ export default function ProviderPanel({ provider, hour, onBook, onClose }: Provi
 
             {/* CTA */}
             <View style={styles.ctaSection}>
-              {!done ? (
+              {alreadyBooked ? (
+                <View style={[styles.bookBtn, { backgroundColor: tk.surface, borderWidth: 1, borderColor: tk.line }]}>
+                  <Feather name="check-circle" size={16} color={T.green} />
+                  <Text style={[styles.bookBtnText, { color: tk.muted, marginLeft: 8 }]}>Already booked for {hour}</Text>
+                </View>
+              ) : loading ? (
+                <View style={styles.doneView}>
+                  <View style={[styles.doneIcon, { backgroundColor: T.accent + '18' }]}>
+                    <Animated.View style={{ transform: [{ rotate: translateY.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
+                      <Feather name="loader" size={22} color={T.accent} />
+                    </Animated.View>
+                  </View>
+                  <Text style={[styles.doneTitle, { color: tk.text }]}>Confirming…</Text>
+                  <Text style={[styles.doneSub, { color: tk.muted }]}>Securing your slot</Text>
+                </View>
+              ) : !done ? (
                 <Pressable
-                  style={({ pressed }) => [styles.bookBtn, pressed && { opacity: 0.85 }]}
+                  style={({ pressed }) => [styles.bookBtn, { backgroundColor: tk.text }, pressed && { opacity: 0.85 }]}
                   onPress={handleBook}
                 >
-                  <Text style={styles.bookBtnText}>Confirm — Book {hour} free →</Text>
+                  <Text style={[styles.bookBtnText, { color: tk.bg }]}>Confirm — Book {hour} free →</Text>
                 </Pressable>
               ) : (
                 <View style={styles.doneView}>

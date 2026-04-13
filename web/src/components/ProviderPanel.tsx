@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GROUPS, Provider, T } from '../lib/data'
 import { useTheme } from '../lib/theme'
+import { USER_LOCATION, roadDistanceKm, formatDistance, formatETA } from '../lib/geo'
 
 interface ProviderPanelProps {
   provider: Provider
@@ -16,16 +17,19 @@ interface ProviderPanelProps {
   onBook: (provider: Provider, hour: string) => void
   onWaitlist: (provider: Provider, hour: string) => void
   onClose: () => void
+  alreadyBooked?: boolean
 }
 
-export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onClose }: ProviderPanelProps) {
+export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onClose, alreadyBooked = false }: ProviderPanelProps) {
   const { tk } = useTheme()
   const cg = GROUPS.find(g => g.id === provider.cat)
   const isAvailable = provider.slots.includes(hour)
   const [done, setDone] = useState(false)
   const [waitlisted, setWaitlisted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const dist = roadDistanceKm(USER_LOCATION.latitude, USER_LOCATION.longitude, provider.lat, provider.lng)
 
-  const handleBook     = () => { setDone(true);      setTimeout(() => onBook(provider, hour), 900) }
+  const handleBook     = () => { setLoading(true); setTimeout(() => { setLoading(false); setDone(true); setTimeout(() => onBook(provider, hour), 900) }, 1200) }
   const handleWaitlist = () => { setWaitlisted(true); setTimeout(() => onWaitlist(provider, hour), 700) }
 
   return (
@@ -44,19 +48,19 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
       {/* Category colour bar */}
       <div style={{ height: 4, background: cg?.color, flexShrink: 0 }} />
 
-      {/* Header — always dark */}
-      <div style={{ background: T.ink, padding: '22px 20px 20px', flexShrink: 0 }}>
+      {/* Header — theme-aware */}
+      <div style={{ background: tk.surface, padding: '22px 20px 20px', flexShrink: 0 }}>
         <motion.button
           type="button"
-          whileHover={{ scale: 1.1, background: 'rgba(255,255,255,.18)' }}
+          whileHover={{ scale: 1.1, background: tk.inputBg }}
           whileTap={{ scale: 0.92 }}
           onClick={onClose}
           aria-label="Close panel"
           style={{
             position: 'absolute', top: 16, right: 16,
             width: 28, height: 28, borderRadius: '50%',
-            background: 'rgba(255,255,255,.1)', border: 'none',
-            color: 'rgba(255,255,255,.5)', fontSize: 16, cursor: 'pointer',
+            background: tk.inputBg, border: 'none',
+            color: tk.muted, fontSize: 16, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
           }}
         >×</motion.button>
@@ -74,7 +78,7 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
           >{cg?.icon}</motion.div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: T.white, letterSpacing: '-0.3px', fontFamily: 'Sora,system-ui' }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: tk.text, letterSpacing: '-0.3px', fontFamily: 'Sora,system-ui' }}>
                 {provider.name}
               </span>
               {provider.badge && (
@@ -88,13 +92,30 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
                 </motion.span>
               )}
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.38)', marginTop: 3 }}>{provider.addr}</div>
+            <div style={{ fontSize: 12, color: tk.muted, marginTop: 3 }}>{provider.addr}</div>
+            <div style={{ fontSize: 11, color: tk.sub, marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📍 {formatDistance(dist)}</span>
+              <span style={{ color: tk.line }}>·</span>
+              <span>🕐 {formatETA(dist)}</span>
+            </div>
             <div style={{ fontSize: 12, marginTop: 4, display: 'flex', gap: 4, alignItems: 'center' }}>
               <span style={{ color: '#FFA500' }}>{'★'.repeat(Math.floor(provider.rating))}</span>
-              <span style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>{provider.rating}</span>
-              <span style={{ color: 'rgba(255,255,255,.3)' }}>({provider.reviews})</span>
+              <span style={{ color: tk.sub, fontWeight: 600 }}>{provider.rating}</span>
+              <span style={{ color: tk.muted }}>({provider.reviews})</span>
             </div>
           </div>
+        </div>
+
+        {/* Micro bio */}
+        <div style={{ fontSize: 12, color: tk.muted, marginTop: 10, fontStyle: 'italic', lineHeight: 1.5 }}>
+          {cg?.id === 'hair' ? 'Specializes in modern cuts & natural styles' :
+           cg?.id === 'beauty' ? 'Expert skincare & beauty treatments' :
+           cg?.id === 'wellness' ? 'Holistic wellness & relaxation therapies' :
+           cg?.id === 'repair' ? 'Fast, reliable repairs with warranty' :
+           cg?.id === 'dining' ? 'Local favourite — fresh, seasonal menu' :
+           cg?.id === 'outdoor' ? 'Guided experiences for all skill levels' :
+           cg?.id === 'doctor' ? 'Walk-in friendly — no referral needed' :
+           'Premium local service'}
         </div>
 
         {/* Price / duration pills */}
@@ -104,11 +125,11 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
             [provider.dur, '⏱'],
           ] as [string, string][]).map(([v, ic]) => (
             <div key={v} style={{
-              flex: 1, background: 'rgba(255,255,255,.07)', borderRadius: 10,
-              padding: '10px', textAlign: 'center', border: '1px solid rgba(255,255,255,.06)',
+              flex: 1, background: tk.inputBg, borderRadius: 10,
+              padding: '10px', textAlign: 'center', border: `1px solid ${tk.inputBorder}`,
             }}>
               <div style={{ fontSize: 14 }}>{ic}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginTop: 3, fontFamily: 'Sora,system-ui' }}>{v}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: tk.text, marginTop: 3, fontFamily: 'Sora,system-ui' }}>{v}</div>
             </div>
           ))}
         </div>
@@ -164,7 +185,7 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
       </div>
 
       {/* Price breakdown — always visible before action */}
-      {!done && !waitlisted && (
+      {!done && !waitlisted && !loading && (
         <div style={{ padding: '12px 20px 0', background: tk.surface, borderTop: `1px solid ${tk.line}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: tk.muted }}>
             <span>Your cost</span>
@@ -180,17 +201,54 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
       {/* CTA */}
       <div style={{ padding: '14px 20px 20px', flexShrink: 0 }}>
         <AnimatePresence mode="wait">
-          {!done && !waitlisted ? (
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ textAlign: 'center', padding: '10px 0' }}
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                style={{
+                  width: 42, height: 42, borderRadius: 12, background: `${T.accent}18`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 10px',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                </svg>
+              </motion.div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>Confirming…</div>
+              <div style={{ fontSize: 12, color: tk.muted, marginTop: 3 }}>Securing your slot</div>
+            </motion.div>
+          ) : alreadyBooked ? (
+            <motion.div key="already" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '12px 0' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '14px', borderRadius: 13,
+                background: tk.surface, border: `1px solid ${tk.line}`,
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <span style={{ fontSize: 14, fontWeight: 700, color: tk.muted, fontFamily: 'Sora,system-ui' }}>Already booked for {hour}</span>
+              </div>
+            </motion.div>
+          ) : !done && !waitlisted ? (
             <motion.div key="cta" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {isAvailable ? (
                 <motion.button
                   type="button"
                   onClick={handleBook}
-                  whileHover={{ scale: 1.02, background: T.soft }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   style={{
                     width: '100%', padding: '15px', borderRadius: 13,
-                    background: T.ink, color: T.white, fontSize: 14, fontWeight: 800,
+                    background: tk.text, color: tk.bg, fontSize: 14, fontWeight: 800,
                     border: 'none', cursor: 'pointer', letterSpacing: '-0.2px',
                     fontFamily: 'Sora,system-ui',
                   }}
@@ -220,23 +278,47 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-              style={{ textAlign: 'center' }}
+              style={{ textAlign: 'center', padding: '8px 0' }}
             >
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 16, delay: 0.1 }}
                 style={{
-                  width: 52, height: 52, borderRadius: 16, background: `${cg?.color}18`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px',
+                  width: 64, height: 64, borderRadius: 20, background: `${cg?.color}18`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <svg width="28" height="28" viewBox="0 0 22 22" fill="none">
                   <path d="M4 11L8.5 15.5L18 6" stroke={cg?.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </motion.div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>Booked!</div>
-              <div style={{ fontSize: 12, color: tk.muted, marginTop: 3 }}>{provider.name} · {hour}</div>
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{ fontSize: 20, fontWeight: 900, color: tk.text, fontFamily: 'Sora,system-ui', letterSpacing: '-0.5px' }}
+              >You're booked!</motion.div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                style={{ fontSize: 13, color: tk.muted, marginTop: 6 }}
+              >{provider.name} · {hour}</motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                style={{
+                  marginTop: 14, padding: '12px 14px', borderRadius: 12,
+                  background: tk.surface, border: `1px solid ${tk.line}`,
+                  fontSize: 12, color: tk.sub, lineHeight: 1.6,
+                }}
+              >
+                📍 {provider.addr}<br/>
+                🕐 Show up at <strong>{hour}</strong> · {provider.dur}<br/>
+                💸 <span style={{ color: T.green, fontWeight: 700 }}>$0 — free for you</span>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div

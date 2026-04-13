@@ -1,3 +1,10 @@
+/**
+ * account.tsx — Customer account & settings screen.
+ *
+ * Sections: avatar with editable name, role switch to provider,
+ * push notifications toggle, dark/light mode toggle, legal links
+ * (terms, privacy, cookies), and logout.
+ */
 import { useState } from 'react'
 import { View, Text, Pressable, ScrollView, Switch, TextInput, Alert, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -5,10 +12,12 @@ import { useRouter } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
 import { T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
+import { usePickerStyle, type PickerStyle } from '../../lib/picker-style'
 import { s, ms, vs } from '../../lib/scale'
 
 export default function AccountScreen() {
   const { tk, mode, toggle } = useTheme()
+  const { pickerStyle, setPickerStyle } = usePickerStyle()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const topPad = Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 0) : insets.top
@@ -131,6 +140,20 @@ export default function AccountScreen() {
           </SettingRow>
         </View>
 
+        {/* Booking Preferences */}
+        <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.line }]}>
+          <Text style={[styles.sectionLabel, { color: tk.muted }]}>Booking Preferences</Text>
+          <SettingRow label="Time Picker Style" tk={tk}>
+            <SegmentedControl
+              options={['wheel', 'dial'] as PickerStyle[]}
+              labels={['Wheel', 'Dial']}
+              value={pickerStyle}
+              onChange={setPickerStyle}
+              tk={tk}
+            />
+          </SettingRow>
+        </View>
+
         {/* Legal */}
         <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.line }]}>
           <Text style={[styles.sectionLabel, { color: tk.muted }]}>Legal</Text>
@@ -141,6 +164,24 @@ export default function AccountScreen() {
           ] as const).map(item => (
             <Pressable key={item.label} style={[styles.linkRow, { borderBottomColor: tk.line }]} onPress={() => router.push(item.route as any)}>
               <Text style={[styles.linkText, { color: tk.text }]}>{item.label}</Text>
+              <Feather name="chevron-right" size={ms(16)} color={tk.muted} />
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Help & Support */}
+        <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.line }]}>
+          <Text style={[styles.sectionLabel, { color: tk.muted }]}>Help & Support</Text>
+          {([
+            { label: 'FAQ', icon: 'help-circle' as const, route: '/help/faq' },
+            { label: 'Contact Support', icon: 'message-circle' as const, route: '/help/contact' },
+            { label: 'Report a Problem', icon: 'alert-triangle' as const, route: '/help/report' },
+          ]).map(item => (
+            <Pressable key={item.label} onPress={() => router.push(item.route as any)} style={[styles.linkRow, { borderBottomColor: tk.line }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(10) }}>
+                <Feather name={item.icon} size={ms(16)} color={T.accent} />
+                <Text style={[styles.linkText, { color: tk.text }]}>{item.label}</Text>
+              </View>
               <Feather name="chevron-right" size={ms(16)} color={tk.muted} />
             </Pressable>
           ))}
@@ -183,6 +224,48 @@ const settingStyles = StyleSheet.create({
   label: {
     fontSize: ms(14),
     fontFamily: 'Sora_400Regular',
+  },
+})
+
+function SegmentedControl<V extends string>({ options, labels, value, onChange, tk }: {
+  options: V[]; labels: string[]; value: V; onChange: (v: V) => void; tk: any
+}) {
+  return (
+    <View style={segStyles.container}>
+      {options.map((opt, i) => {
+        const active = opt === value
+        return (
+          <Pressable
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[
+              segStyles.option,
+              { backgroundColor: active ? T.accent + '18' : 'transparent', borderColor: active ? T.accent + '50' : tk.line },
+            ]}
+          >
+            <Text style={[segStyles.optionText, { color: active ? T.accent : tk.muted, fontFamily: active ? 'Sora_700Bold' : 'Sora_400Regular' }]}>
+              {labels[i]}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+const segStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    gap: s(6),
+  },
+  option: {
+    paddingVertical: vs(6),
+    paddingHorizontal: s(14),
+    borderRadius: s(12),
+    borderWidth: 1,
+  },
+  optionText: {
+    fontSize: ms(12),
   },
 })
 

@@ -1,3 +1,11 @@
+/**
+ * slots.tsx — Provider slot management screen.
+ *
+ * Allows providers to configure their daily availability:
+ * start hour, end hour, and slot duration (15–90 min).
+ * Preview grid shows generated slots before saving.
+ * Edit/save/cancel flow with validation.
+ */
 import { useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

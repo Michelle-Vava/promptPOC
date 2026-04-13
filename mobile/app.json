@@ -38,6 +38,19 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "365f3c0c-1afc-4124-9929-2272f16babd3"
+      }
+    },
+    "owner": "michellevava26",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/365f3c0c-1afc-4124-9929-2272f16babd3"
+    }
   }
 }

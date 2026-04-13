@@ -1,13 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'
 import Shell from '../components/Shell'
 import Footer from '../components/Footer'
-
-interface ProviderDashboardProps {
-  onSignOut: () => void
-  onSwitchToCustomer: () => void
-}
 
 interface Request { id: number; time: string; customer: string }
 interface AcceptedBooking { id: number; time: string; customer: string }
@@ -46,7 +42,8 @@ function generateSlots(start: string, end: string, dur: number): string[] {
   return slots
 }
 
-export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: ProviderDashboardProps) {
+export default function ProviderDashboard() {
+  const navigate = useNavigate()
   const { tk } = useTheme()
   const [tab, setTab]   = useState<'dashboard' | 'account'>('dashboard')
   const [isLive, setIsLive] = useState(true)
@@ -62,8 +59,8 @@ export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: Pro
 
   // Requests state
   const [requests, setRequests] = useState<Request[]>([
-    { id: 1, time: '2:00 PM', customer: 'Customer #A44' },
-    { id: 2, time: '4:30 PM', customer: 'Customer #B88' },
+    { id: 1, time: '2:00 PM', customer: 'Alex K.' },
+    { id: 2, time: '4:30 PM', customer: 'Sarah M.' },
   ])
   const [accepted, setAccepted] = useState<AcceptedBooking[]>([])
 
@@ -88,8 +85,8 @@ export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: Pro
     <button type="button" onClick={() => setTab(id)} style={{
       padding: '8px 20px', borderRadius: 20, border: 'none', cursor: 'pointer',
       fontSize: 13, fontWeight: 700, fontFamily: 'Sora,system-ui',
-      background: tab === id ? T.white : 'transparent',
-      color: tab === id ? T.ink : 'rgba(255,255,255,.4)',
+      background: tab === id ? tk.card : 'transparent',
+      color: tab === id ? tk.text : tk.muted,
       transition: 'all .15s',
     }}>{label}</button>
   )
@@ -105,27 +102,27 @@ export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: Pro
       <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
         {/* Nav */}
         <div style={{
-          background: T.ink, padding: '0 40px', height: 58,
+          background: tk.surface, padding: '0 40px', height: 58,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,.06)',
+          borderBottom: `1px solid ${tk.line}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.green, animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 16, fontWeight: 900, color: T.white, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
-            <div style={{ display: 'flex', gap: 2, marginLeft: 16, background: 'rgba(255,255,255,.07)', borderRadius: 24, padding: 3 }}>
+            <span style={{ fontSize: 16, fontWeight: 900, color: tk.text, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
+            <div style={{ display: 'flex', gap: 2, marginLeft: 16, background: tk.inputBg, borderRadius: 24, padding: 3 }}>
               <TabBtn id="dashboard" label="Dashboard" />
               <TabBtn id="account"   label="Account" />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button type="button" onClick={onSwitchToCustomer} style={{
+            <button type="button" onClick={() => navigate({ to: '/map' })} style={{
               padding: '7px 14px', borderRadius: 20,
-              background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)',
-              color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 600,
+              background: tk.inputBg, border: `1px solid ${tk.inputBorder}`,
+              color: tk.muted, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', fontFamily: 'Sora,system-ui',
             }}>Customer view</button>
-            <button type="button" onClick={onSignOut} style={{
-              fontSize: 12, color: 'rgba(255,255,255,.32)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            <button type="button" onClick={() => navigate({ to: '/' })} style={{
+              fontSize: 12, color: tk.muted, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
             }}>Sign out</button>
           </div>
         </div>
@@ -159,15 +156,16 @@ export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: Pro
           <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px' }}>
             <div style={{ marginBottom: 32 }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', fontFamily: 'Sora,system-ui' }}>Dashboard</div>
-              <p style={{ fontSize: 14, color: tk.muted, marginTop: 4 }}>$1 per confirmed booking · Today only</p>
+              <p style={{ fontSize: 14, color: tk.muted, marginTop: 4 }}>$1 per confirmed booking · Always</p>
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
               {([
-                ['📅', String(bookingsToday), 'Bookings Today'],
-                ['💰', `$${chargedToday}`, 'Charged Today'],
+                ['📅', String(bookingsToday), 'Bookings today'],
+                ['💰', `$${chargedToday}`, 'Platform fee today'],
                 ['⭐', '4.8', 'Rating'],
+                ['📈', '$847', 'Earned this week'],
               ] as [string, string, string][]).map(([ic, v, l]) => (
                 <div key={l} style={{ background: tk.card, borderRadius: 18, padding: '24px 20px', boxShadow: '0 1px 8px rgba(0,0,0,.05)', textAlign: 'center', border: `1px solid ${tk.line}` }}>
                   <div style={{ fontSize: 28 }}>{ic}</div>
@@ -204,7 +202,7 @@ export default function ProviderDashboard({ onSignOut, onSwitchToCustomer }: Pro
                     </div>
                     <button type="button" onClick={() => setEditingSlots(true)} style={{
                       width: '100%', padding: '13px', borderRadius: 12,
-                      background: T.ink, color: T.white, fontSize: 13, fontWeight: 700,
+                      background: tk.text, color: tk.bg, fontSize: 13, fontWeight: 700,
                       border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                     }}>Update my slots</button>
                   </>

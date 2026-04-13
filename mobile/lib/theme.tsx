@@ -23,8 +23,7 @@ interface Ctx { mode: ThemeMode; tk: Tokens; toggle: () => void }
 const ThemeCtx = createContext<Ctx>({ mode: 'light', tk: LIGHT, toggle: () => {} })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const systemScheme = useColorScheme()
-  const [mode, setMode] = useState<ThemeMode>(systemScheme === 'dark' ? 'dark' : 'light')
+  const [mode, setMode] = useState<ThemeMode>('light')
 
   const toggle = () => setMode(m => m === 'light' ? 'dark' : 'light')
 

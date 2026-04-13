@@ -1,6 +1,19 @@
+/**
+ * index.tsx — Main map screen (Home tab for customers).
+ *
+ * Core booking experience: interactive map with green pins for
+ * available providers, time wheel for hour selection, category
+ * filters, search, and ProviderPanel bottom sheet for booking.
+ *
+ * Features:
+ *  - Offline detection banner
+ *  - Social-proof toasts (fake "X just booked Y")
+ *  - Double-booking prevention
+ *  - Notifications sheet with tap-to-navigate
+ *  - Control bar: horizontally scrollable search + category chips
+ */
 import { useState, useCallback, useEffect } from 'react'
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, StatusBar as RNStatusBar, Platform, AppState, useWindowDimensions } from 'react-native'
-import { s, ms, vs, isSmall } from '../../lib/scale'
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Platform, StatusBar as RNStatusBar, AppState } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import MapView, { Region } from 'react-native-maps'
@@ -9,32 +22,43 @@ import { Feather } from '@expo/vector-icons'
 import { PROVIDERS, HOURS, GROUPS, Provider, Notification, MOCK_NOTIFICATIONS, T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
 import { useBookings } from '../../lib/bookings-context'
+import { s, ms, vs } from '../../lib/scale'
 import TimeWheel from '../../components/TimeWheel'
+import DialPicker from '../../components/DialPicker'
 import ProviderPanel from '../../components/ProviderPanel'
+import BookingsSheet from '../../components/BookingsSheet'
 import NotificationsSheet from '../../components/NotificationsSheet'
+import Skeleton from '../../components/Skeleton'
 import Toast, { ToastData } from '../../components/Toast'
 import MapPin from '../../components/MapPin'
+import UserLocationPin from '../../components/UserLocationPin'
+import { USER_LOCATION, roadDistanceKm, formatDistance, formatETA } from '../../lib/geo'
+import { usePickerStyle } from '../../lib/picker-style'
 
 const HALIFAX: Region = { latitude: 44.68, longitude: -63.65, latitudeDelta: 0.12, longitudeDelta: 0.12 }
 
 export default function MapScreen() {
   const { tk, mode } = useTheme()
+  const { pickerStyle } = usePickerStyle()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
   // Shared state
-  const { bookings, addBooking } = useBookings()
+  const { bookings, waitlisted, addBooking, removeBooking, removeWaitlist } = useBookings()
 
   // Core state
-  const [category, setCategory] = useState<string | null>(null)
+  const [category, setCategory] = useState<string | null>('hair')
   const [hourIdx, setHourIdx] = useState(2)
   const [activeId, setActiveId] = useState<number | null>(null)
 
   // UI state
   const [search, setSearch] = useState('')
   const [notifsOpen, setNotifsOpen] = useState(false)
+  const [bookingsOpen, setBookingsOpen] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
-  const [toasts, setToasts] = useState<ToastData[]>([])
+  const [toasts, setToasts] = useState<ToastData[]>([])  
+  const [hintDismissed, setHintDismissed] = useState(false)
 
   const pushToast = useCallback((message: string, type: ToastData['type'] = 'success') => {
     setToasts(ts => [...ts, { id: Date.now(), message, type }])
@@ -55,6 +79,7 @@ export default function MapScreen() {
 
   const bookable = searchFiltered.filter(p => p.slots.includes(hour))
   const availableIds = new Set(bookable.map(p => p.id))
+  const bookedAtHour = new Set(bookings.filter(b => b.slot === hour).map(b => b.provider.id))
   const unreadNotifs = notifications.filter(n => !n.read).length
   const activeProv = PROVIDERS.find(p => p.id === activeId) ?? null
 
@@ -119,6 +144,16 @@ export default function MapScreen() {
 
           {/* Actions */}
           <View style={styles.actionsRow}>
+            {/* Bookings */}
+            <Pressable onPress={() => setBookingsOpen(true)} style={[styles.navBtn, { backgroundColor: tk.surface, borderColor: tk.line }]}>
+              <Feather name="shopping-bag" size={16} color={tk.muted} />
+              {bookings.length > 0 && (
+                <View style={[styles.badge, { backgroundColor: T.green }]}>
+                  <Text style={styles.badgeText}>{bookings.length}</Text>
+                </View>
+              )}
+            </Pressable>
+
             {/* Notifications */}
             <Pressable onPress={() => setNotifsOpen(true)} style={[styles.navBtn, { backgroundColor: tk.surface, borderColor: tk.line }]}>
               <Feather name="bell" size={16} color={tk.muted} />
@@ -163,12 +198,6 @@ export default function MapScreen() {
           </View>
 
           {/* Category chips */}
-          <Pressable
-            onPress={() => { setCategory(null); setActiveId(null) }}
-            style={[styles.catChip, !category && styles.catChipActive, { borderColor: !category ? T.accent + '40' : tk.line, backgroundColor: !category ? T.accent + '12' : 'transparent' }]}
-          >
-            <Text style={[styles.catChipText, { color: !category ? tk.text : tk.muted }]}>All</Text>
-          </Pressable>
           {GROUPS.map(g => {
             const active = category === g.id
             return (
@@ -191,6 +220,7 @@ export default function MapScreen() {
           style={StyleSheet.absoluteFill}
           initialRegion={HALIFAX}
           userInterfaceStyle={mode === 'dark' ? 'dark' : 'light'}
+          onMapReady={() => setMapReady(true)}
         >
           {bookable.map((p, i) => {
             return (
@@ -198,31 +228,75 @@ export default function MapScreen() {
                 key={p.id}
                 provider={p}
                 isActive={activeId === p.id}
+                isBooked={bookedAtHour.has(p.id)}
                 index={i}
-                onPress={() => setActiveId(activeId === p.id ? null : p.id)}
+                onPress={() => { setActiveId(activeId === p.id ? null : p.id); setHintDismissed(true) }}
               />
             )
           })}
+          {/* User location dot */}
+          <UserLocationPin latitude={USER_LOCATION.latitude} longitude={USER_LOCATION.longitude} />
         </MapView>
 
-        {/* Time wheel */}
-        <TimeWheel hourIdx={hourIdx} setHourIdx={setHourIdx} />
+        {/* Map loading skeleton */}
+        {!mapReady && (
+          <View style={[StyleSheet.absoluteFill, styles.mapSkeleton, { backgroundColor: tk.bg }]}>
+            <Skeleton width={s(200)} height={ms(16)} borderRadius={s(8)} />
+            <View style={{ flexDirection: 'row', gap: s(10), marginTop: vs(16) }}>
+              <Skeleton width={s(80)} height={s(80)} borderRadius={s(12)} />
+              <View style={{ gap: vs(8), flex: 1 }}>
+                <Skeleton width={s(160)} height={ms(12)} borderRadius={s(4)} />
+                <Skeleton width={s(120)} height={ms(12)} borderRadius={s(4)} />
+                <Skeleton width={s(90)} height={ms(12)} borderRadius={s(4)} />
+              </View>
+            </View>
+            <Skeleton width={s(160)} height={ms(14)} borderRadius={s(8)} style={{ marginTop: vs(24) }} />
+          </View>
+        )}
+
+        {/* Time picker (wheel or dial based on user preference) */}
+        {pickerStyle === 'dial'
+          ? <DialPicker hourIdx={hourIdx} setHourIdx={setHourIdx} />
+          : <TimeWheel hourIdx={hourIdx} setHourIdx={setHourIdx} />}
 
         {/* Open count overlay */}
         {availableIds.size > 0 && !activeId && (
-          <View style={styles.openOverlay}>
+          <View style={[styles.openOverlay, {
+            backgroundColor: mode === 'dark' ? 'rgba(13,13,13,0.82)' : 'rgba(255,255,255,0.92)',
+            borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+          }]}>
             <Text style={{ fontSize: 11, fontFamily: 'Sora_700Bold', color: T.green }}>
               {availableIds.size} open now
             </Text>
           </View>
         )}
 
+        {/* Distance + ETA overlay — shows when a pin is tapped */}
+        {activeId && activeProv && (() => {
+          const dist = roadDistanceKm(USER_LOCATION.latitude, USER_LOCATION.longitude, activeProv.lat, activeProv.lng)
+          return (
+            <View style={[styles.distanceOverlay, {
+              backgroundColor: mode === 'dark' ? 'rgba(13,13,13,0.85)' : 'rgba(255,255,255,0.94)',
+              borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }]}>
+              <Feather name="navigation" size={ms(12)} color={T.accent} />
+              <Text style={[styles.distanceText, { color: tk.text }]}>{formatDistance(dist)}</Text>
+              <View style={[styles.distanceDivider, { backgroundColor: tk.line }]} />
+              <Feather name="clock" size={ms(11)} color={tk.muted} />
+              <Text style={[styles.etaText, { color: tk.muted }]}>{formatETA(dist)}</Text>
+            </View>
+          )
+        })()}
+
         {/* No results */}
         {search.length > 0 && searchFiltered.length === 0 && (
           <View style={styles.emptyOverlay}>
-            <View style={styles.emptyCard}>
-              <Feather name="search" size={ms(24)} color="rgba(255,255,255,0.4)" />
-              <Text style={styles.emptyTitle}>
+            <View style={[styles.emptyCard, {
+              backgroundColor: mode === 'dark' ? 'rgba(13,13,13,0.92)' : 'rgba(255,255,255,0.95)',
+              borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }]}>
+              <Feather name="search" size={ms(24)} color={mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)'} />
+              <Text style={[styles.emptyTitle, { color: tk.text }]}>
                 No results for "{search}"
               </Text>
             </View>
@@ -232,22 +306,28 @@ export default function MapScreen() {
         {/* No availability */}
         {!search && bookable.length === 0 && searchFiltered.length > 0 && !activeId && (
           <View style={styles.emptyOverlay} pointerEvents="none">
-            <View style={styles.emptyCard}>
-              <Feather name="clock" size={ms(24)} color="rgba(255,255,255,0.4)" />
-              <Text style={styles.emptyTitle}>
+            <View style={[styles.emptyCard, {
+              backgroundColor: mode === 'dark' ? 'rgba(13,13,13,0.92)' : 'rgba(255,255,255,0.95)',
+              borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }]}>
+              <Feather name="clock" size={ms(24)} color={mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)'} />
+              <Text style={[styles.emptyTitle, { color: tk.text }]}>
                 Nobody open at {hour}
               </Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptySub, { color: tk.muted }]}>
                 Spin the time wheel to find{' \n'}open slots
               </Text>
             </View>
           </View>
         )}
 
-        {/* Hint banner */}
-        {availableIds.size > 0 && !activeId && (
-          <View style={styles.hintBanner}>
-            <Text style={{ fontSize: 12, fontFamily: 'Sora_600SemiBold', color: 'rgba(255,255,255,0.7)' }}>
+        {/* Hint banner — show once */}
+        {availableIds.size > 0 && !activeId && !hintDismissed && (
+          <View style={[styles.hintBanner, {
+            backgroundColor: mode === 'dark' ? 'rgba(13,13,13,0.82)' : 'rgba(255,255,255,0.92)',
+            borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+          }]}>
+            <Text style={{ fontSize: 12, fontFamily: 'Sora_600SemiBold', color: mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>
               Tap a green pin to book instantly
             </Text>
           </View>
@@ -261,6 +341,7 @@ export default function MapScreen() {
           hour={hour}
           onBook={handleBook}
           onClose={() => setActiveId(null)}
+          alreadyBooked={bookedAtHour.has(activeProv.id)}
         />
       )}
 
@@ -279,6 +360,16 @@ export default function MapScreen() {
         onClose={() => setNotifsOpen(false)}
       />
 
+      {/* ── Bookings sheet ─── */}
+      <BookingsSheet
+        bookings={bookings}
+        waitlisted={waitlisted}
+        isOpen={bookingsOpen}
+        onClose={() => setBookingsOpen(false)}
+        onCancelBooking={removeBooking}
+        onCancelWaitlist={removeWaitlist}
+      />
+
       {/* ── Toasts ─── */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </View>
@@ -287,6 +378,7 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  mapSkeleton: { alignItems: 'center', justifyContent: 'center', zIndex: 10 },
 
   // Nav
   nav: {
@@ -368,6 +460,32 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.08)',
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  distanceOverlay: {
+    position: 'absolute',
+    top: vs(14),
+    left: s(14),
+    borderRadius: s(16),
+    paddingVertical: vs(6),
+    paddingHorizontal: s(12),
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(5),
+    zIndex: 1001,
+  },
+  distanceText: {
+    fontSize: ms(12),
+    fontFamily: 'Sora_700Bold',
+  },
+  distanceDivider: {
+    width: 1,
+    height: ms(12),
+    marginHorizontal: s(2),
+  },
+  etaText: {
+    fontSize: ms(11),
+    fontFamily: 'Sora_600SemiBold',
   },
   emptyOverlay: {
     position: 'absolute',

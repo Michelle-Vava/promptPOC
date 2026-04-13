@@ -1,3 +1,10 @@
+/**
+ * _layout.tsx — Provider bottom tab navigator.
+ *
+ * Four tabs: Dashboard (live toggle + incoming requests),
+ * Bookings (today's + history), Slots (availability editor),
+ * Account (business info, billing, settings).
+ */
 import { Tabs } from 'expo-router'
 import { View, Text, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

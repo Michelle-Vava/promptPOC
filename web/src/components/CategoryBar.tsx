@@ -9,6 +9,7 @@
  * The scrollbar is hidden via scrollbarWidth/msOverflowStyle for cleanliness.
  */
 import { GROUPS, T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 import Chip from './Chip'
 
 interface CategoryBarProps {
@@ -18,8 +19,9 @@ interface CategoryBarProps {
 }
 
 export default function CategoryBar({ category, setCategory, setActiveId }: CategoryBarProps) {
+  const { tk, mode } = useTheme()
   return (
-    <div style={{ background: T.ink, flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,.06)', position: 'relative' }}>
+    <div style={{ background: tk.surface, flexShrink: 0, borderBottom: `1px solid ${tk.line}`, position: 'relative' }}>
       <div style={{
         padding: '10px 20px 12px',
         display: 'flex',
@@ -28,10 +30,6 @@ export default function CategoryBar({ category, setCategory, setActiveId }: Cate
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
       }}>
-        {/* "All" chip — clears the category filter */}
-        <Chip active={!category} color={T.accent} onClick={() => { setCategory(null); setActiveId(null) }}>
-          All
-        </Chip>
         {GROUPS.map(g => (
           <Chip
             key={g.id}
@@ -46,7 +44,7 @@ export default function CategoryBar({ category, setCategory, setActiveId }: Cate
       {/* Fade gradient — indicates more chips off-screen to the right */}
       <div style={{
         position: 'absolute', top: 0, right: 0, width: 48, height: '100%',
-        background: 'linear-gradient(to left, rgba(13,13,13,1) 0%, rgba(13,13,13,0) 100%)',
+        background: `linear-gradient(to left, ${mode === 'dark' ? 'rgba(17,17,17,1)' : 'rgba(245,243,239,1)'} 0%, ${mode === 'dark' ? 'rgba(17,17,17,0)' : 'rgba(245,243,239,0)'} 100%)`,
         pointerEvents: 'none',
       }} />
     </div>

@@ -1,6 +1,8 @@
+/** AuthInput — Themed text input with floating label for auth forms. */
 import { useState } from 'react'
 import { View, Text, TextInput, StyleSheet } from 'react-native'
 import { T } from '../lib/data'
+import { useTheme } from '../lib/theme'
 
 interface AuthInputProps {
   label: string
@@ -10,17 +12,18 @@ interface AuthInputProps {
 
 export default function AuthInput({ label, placeholder, type = 'text' }: AuthInputProps) {
   const [focused, setFocused] = useState(false)
+  const { tk } = useTheme()
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: tk.muted }]}>{label}</Text>
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor="rgba(255,255,255,0.25)"
+        placeholderTextColor={tk.muted}
         secureTextEntry={type === 'password'}
         keyboardType={type === 'email' ? 'email-address' : 'default'}
         autoCapitalize={type === 'email' ? 'none' : 'sentences'}
-        style={[styles.input, focused && styles.inputFocused]}
+        style={[styles.input, { backgroundColor: tk.inputBg, borderColor: tk.inputBorder, color: tk.text }, focused && { borderColor: tk.sub }]}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       />

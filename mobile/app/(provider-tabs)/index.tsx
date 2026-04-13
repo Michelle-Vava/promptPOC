@@ -1,3 +1,10 @@
+/**
+ * index.tsx — Provider dashboard screen.
+ *
+ * Features: live/pause toggle, stats row (bookings today, charged,
+ * rating), incoming booking requests with accept/decline actions,
+ * and a confirmed-today section.
+ */
 import { useState } from 'react'
 import { View, Text, Pressable, ScrollView, Switch, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

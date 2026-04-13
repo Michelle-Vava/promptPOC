@@ -65,13 +65,13 @@ export interface Notification {
 
 export const GROUPS: Group[] = [
   { id: 'hair',     icon: '✂️',  label: 'Hair',     color: '#FF5C00' },
-  { id: 'repair',   icon: '🔧',  label: 'Repair',   color: '#0066FF' },
-  { id: 'beauty',   icon: '💅',  label: 'Beauty',   color: '#D4006E' },
-  { id: 'wellness', icon: '💆',  label: 'Wellness', color: '#00855A' },
-  { id: 'dining',   icon: '🍽️', label: 'Dining',   color: '#7C3AED' },
-  { id: 'outdoor',  icon: '🌿',  label: 'Outdoor',  color: '#1A7A1A' },
-  { id: 'stay',     icon: '🏠',  label: 'Stay',     color: '#C47300' },
-  { id: 'doctor',   icon: '🩺',  label: 'Doctor',   color: '#CC2200' },
+  { id: 'repair',   icon: '🔧',  label: 'Repair',   color: '#3B82F6' },
+  { id: 'beauty',   icon: '💅',  label: 'Beauty',   color: '#EC4899' },
+  { id: 'wellness', icon: '💆',  label: 'Wellness', color: '#8B5CF6' },
+  { id: 'dining',   icon: '🍽️', label: 'Dining',   color: '#F59E0B' },
+  { id: 'outdoor',  icon: '🌿',  label: 'Outdoor',  color: '#10B981' },
+  { id: 'stay',     icon: '🏠',  label: 'Stay',     color: '#06B6D4' },
+  { id: 'doctor',   icon: '🩺',  label: 'Doctor',   color: '#EF4444' },
 ]
 
 // ── Time slots ────────────────────────────────────────────────────────────────
@@ -79,12 +79,13 @@ export const GROUPS: Group[] = [
 /** Operating hours shown in the TimeWheel (9 AM – 8 PM) */
 export const HOURS: string[] = [
   '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM',
-  '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM',
+  '3 PM', '4 PM', '5 PM', '6 PM', '8 PM',
 ]
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 //
-// 25 mock providers placed at verified Halifax peninsula land coordinates.
+// 40 mock providers placed at verified Halifax-region land coordinates.
+// Coverage: Halifax (25), Dartmouth (6), Bedford (5), Tantallon (4).
 // Key geography: harbour is on the EAST side — lng > ~-63.572 at downtown
 // latitudes puts you in the water. All coordinates below are on solid ground.
 
@@ -109,8 +110,8 @@ export const PROVIDERS: Provider[] = [
   { id: 20, cat: 'wellness', name: 'Float Tank HFX',      lat: 44.6523, lng: -63.5899, rating: 4.7, reviews: 44,  price: 90,  dur: '90 min',  slots: ['9 AM', '11 AM', '2 PM'],                 addr: '2742 Agricola St',    badge: null },
   // ── Dining ──────────────────────────────────────────────────────────────────
   { id: 11, cat: 'dining',   name: 'Café Maison',         lat: 44.6444, lng: -63.5836, rating: 4.5, reviews: 312, price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '6 PM', '8 PM'], addr: '1569 Dresden Row',   badge: null },
-  { id: 12, cat: 'dining',   name: 'Bistro Nord',         lat: 44.6456, lng: -63.5730, rating: 4.3, reviews: 289, price: 0,   dur: '90 min',  slots: ['12 PM', '7 PM', '8 PM'],                 addr: '1477 Lower Water St', badge: 'Hot' },
-  { id: 21, cat: 'dining',   name: 'The Canteen',         lat: 44.6484, lng: -63.5748, rating: 4.6, reviews: 411, price: 0,   dur: '45 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '7 PM'], addr: '1256 Barrington St',  badge: 'Hot' },
+  { id: 12, cat: 'dining',   name: 'Bistro Nord',         lat: 44.6456, lng: -63.5730, rating: 4.3, reviews: 289, price: 0,   dur: '90 min',  slots: ['12 PM', '8 PM'],                         addr: '1477 Lower Water St', badge: 'Hot' },
+  { id: 21, cat: 'dining',   name: 'The Canteen',         lat: 44.6484, lng: -63.5748, rating: 4.6, reviews: 411, price: 0,   dur: '45 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM'],        addr: '1256 Barrington St',  badge: 'Hot' },
   // ── Outdoor ─────────────────────────────────────────────────────────────────
   { id: 13, cat: 'outdoor',  name: 'Kayak HFX',           lat: 44.6374, lng: -63.5806, rating: 4.7, reviews: 55,  price: 55,  dur: '2 hrs',   slots: ['9 AM', '11 AM', '2 PM'],                 addr: 'Point Pleasant Dr',   badge: null },
   { id: 14, cat: 'outdoor',  name: 'Trail Guide Co.',     lat: 44.6299, lng: -63.5757, rating: 4.8, reviews: 40,  price: 40,  dur: '3 hrs',   slots: ['9 AM', '1 PM'],                          addr: 'Point Pleasant Park', badge: 'New' },
@@ -122,6 +123,27 @@ export const PROVIDERS: Provider[] = [
   { id: 16, cat: 'doctor',   name: 'Walk-In Clinic HFX',  lat: 44.6478, lng: -63.6139, rating: 4.4, reviews: 189, price: 0,   dur: '20 min',  slots: ['9 AM', '10 AM', '11 AM', '2 PM', '4 PM'], addr: '7071 Bayers Rd',     badge: 'Open Now' },
   { id: 17, cat: 'doctor',   name: 'Dr. Patel Family',    lat: 44.6422, lng: -63.5901, rating: 4.9, reviews: 78,  price: 0,   dur: '30 min',  slots: ['9 AM', '1 PM', '3 PM'],                  addr: '6389 Coburg Rd',      badge: null },
   { id: 25, cat: 'doctor',   name: 'Harbour Dental',      lat: 44.6543, lng: -63.5869, rating: 4.7, reviews: 55,  price: 0,   dur: '45 min',  slots: ['9 AM', '11 AM', '2 PM'],                 addr: '1545 Birmingham St',  badge: 'Open Now' },
+
+  // ── Dartmouth ───────────────────────────────────────────────────────────────
+  { id: 26, cat: 'hair',     name: 'Dartmouth Cuts',      lat: 44.6713, lng: -63.5619, rating: 4.6, reviews: 67,  price: 28,  dur: '30 min',  slots: ['9 AM', '11 AM', '1 PM', '4 PM'],         addr: '118 Portland St, Dartmouth',   badge: null },
+  { id: 27, cat: 'beauty',   name: 'Harbour Glow Spa',    lat: 44.6659, lng: -63.5661, rating: 4.8, reviews: 92,  price: 60,  dur: '60 min',  slots: ['10 AM', '12 PM', '3 PM', '5 PM'],        addr: '46 Ochterloney St, Dartmouth', badge: 'New' },
+  { id: 28, cat: 'dining',   name: 'Two If By Sea',       lat: 44.6643, lng: -63.5709, rating: 4.9, reviews: 520, price: 0,   dur: '45 min',  slots: ['9 AM', '10 AM', '11 AM', '12 PM', '2 PM'], addr: '66 Ochterloney St, Dartmouth', badge: 'Top Rated' },
+  { id: 29, cat: 'repair',   name: 'Dartmouth Tech Fix',  lat: 44.6724, lng: -63.5584, rating: 4.4, reviews: 38,  price: 55,  dur: '45 min',  slots: ['10 AM', '1 PM', '3 PM'],                 addr: '60 Tacoma Dr, Dartmouth',      badge: null },
+  { id: 30, cat: 'wellness', name: 'Calm Waters Yoga',    lat: 44.6681, lng: -63.5630, rating: 4.7, reviews: 73,  price: 25,  dur: '60 min',  slots: ['9 AM', '11 AM', '4 PM', '6 PM'],         addr: '15 King St, Dartmouth',        badge: null },
+  { id: 31, cat: 'outdoor',  name: 'Banook Paddle Co.',   lat: 44.6600, lng: -63.5550, rating: 4.8, reviews: 31,  price: 45,  dur: '2 hrs',   slots: ['9 AM', '11 AM', '2 PM'],                 addr: 'Banook Lake, Dartmouth',       badge: 'New' },
+
+  // ── Bedford ─────────────────────────────────────────────────────────────────
+  { id: 32, cat: 'hair',     name: 'Bedford Barbers',     lat: 44.7325, lng: -63.6570, rating: 4.5, reviews: 112, price: 30,  dur: '30 min',  slots: ['9 AM', '10 AM', '12 PM', '2 PM', '4 PM'], addr: '1475 Bedford Hwy, Bedford',   badge: null },
+  { id: 33, cat: 'beauty',   name: 'The Nail Room',       lat: 44.7291, lng: -63.6612, rating: 4.7, reviews: 84,  price: 45,  dur: '60 min',  slots: ['10 AM', '1 PM', '3 PM', '5 PM'],         addr: '1595 Bedford Hwy, Bedford',   badge: null },
+  { id: 34, cat: 'doctor',   name: 'Bedford Walk-In',     lat: 44.7360, lng: -63.6530, rating: 4.3, reviews: 210, price: 0,   dur: '20 min',  slots: ['9 AM', '10 AM', '11 AM', '2 PM', '4 PM'], addr: '1090 Bedford Hwy, Bedford',  badge: 'Open Now' },
+  { id: 35, cat: 'dining',   name: 'The Esquire',         lat: 44.7340, lng: -63.6555, rating: 4.5, reviews: 178, price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '6 PM'], addr: '1535 Bedford Hwy, Bedford',  badge: null },
+  { id: 36, cat: 'wellness', name: 'Bedford Massage Co.', lat: 44.7310, lng: -63.6590, rating: 4.8, reviews: 56,  price: 85,  dur: '60 min',  slots: ['9 AM', '11 AM', '2 PM', '4 PM'],         addr: '1660 Bedford Hwy, Bedford',   badge: null },
+
+  // ── Tantallon ───────────────────────────────────────────────────────────────
+  { id: 37, cat: 'hair',     name: 'Coastal Cuts',        lat: 44.6545, lng: -63.7445, rating: 4.6, reviews: 45,  price: 32,  dur: '35 min',  slots: ['9 AM', '11 AM', '2 PM'],                 addr: '5178 St Margarets Bay Rd',    badge: null },
+  { id: 38, cat: 'repair',   name: 'Bay Road Auto',       lat: 44.6560, lng: -63.7490, rating: 4.4, reviews: 62,  price: 80,  dur: '60 min',  slots: ['9 AM', '10 AM', '1 PM', '3 PM'],         addr: '5230 St Margarets Bay Rd',    badge: null },
+  { id: 39, cat: 'dining',   name: 'Tantallon Bistro',    lat: 44.6530, lng: -63.7425, rating: 4.5, reviews: 97,  price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '5 PM', '6 PM'],        addr: '5120 St Margarets Bay Rd',    badge: null },
+  { id: 40, cat: 'outdoor',  name: 'Bay Kayak Adventures', lat: 44.6480, lng: -63.7380, rating: 4.9, reviews: 22, price: 65,  dur: '3 hrs',   slots: ['9 AM', '1 PM'],                          addr: 'St Margarets Bay, Tantallon', badge: 'New' },
 ]
 
 // ── Static dark tokens (T) ────────────────────────────────────────────────────
@@ -149,4 +171,26 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: 3, type: 'provider_accepted',  message: 'The Barber Co. accepted your 1 PM request',            time: '1 hr ago',   read: true  },
   { id: 4, type: 'booking_confirmed',  message: 'Walk-In Clinic HFX confirmed your 10 AM slot',         time: '3 hrs ago',  read: true  },
   { id: 5, type: 'waitlist_opened',    message: 'Glow Bar has a new 4 PM opening today',                time: 'Yesterday',  read: true  },
+]
+
+export interface PastBooking {
+  id: number
+  provider: Provider
+  slot: string
+  date: string
+  category: string
+  categoryColor: string
+  categoryIcon: string
+  status: 'completed' | 'cancelled'
+}
+
+export const MOCK_PAST_BOOKINGS: PastBooking[] = [
+  { id: 101, provider: PROVIDERS[0],  slot: '11 AM', date: 'Apr 10, 2026', category: 'Hair',     categoryColor: '#FF5C00', categoryIcon: '✂️', status: 'completed' },
+  { id: 102, provider: PROVIDERS[5],  slot: '2 PM',  date: 'Apr 8, 2026',  category: 'Beauty',   categoryColor: '#EC4899', categoryIcon: '💅', status: 'completed' },
+  { id: 103, provider: PROVIDERS[10], slot: '10 AM', date: 'Apr 6, 2026',  category: 'Dining',   categoryColor: '#F59E0B', categoryIcon: '🍽️', status: 'completed' },
+  { id: 104, provider: PROVIDERS[2],  slot: '3 PM',  date: 'Apr 4, 2026',  category: 'Hair',     categoryColor: '#FF5C00', categoryIcon: '✂️', status: 'cancelled' },
+  { id: 105, provider: PROVIDERS[15], slot: '1 PM',  date: 'Apr 2, 2026',  category: 'Wellness', categoryColor: '#8B5CF6', categoryIcon: '💆', status: 'completed' },
+  { id: 106, provider: PROVIDERS[8],  slot: '4 PM',  date: 'Mar 30, 2026', category: 'Repair',   categoryColor: '#3B82F6', categoryIcon: '🔧', status: 'completed' },
+  { id: 107, provider: PROVIDERS[20], slot: '9 AM',  date: 'Mar 28, 2026', category: 'Outdoor',  categoryColor: '#10B981', categoryIcon: '🌿', status: 'completed' },
+  { id: 108, provider: PROVIDERS[12], slot: '5 PM',  date: 'Mar 25, 2026', category: 'Dining',   categoryColor: '#F59E0B', categoryIcon: '🍽️', status: 'completed' },
 ]

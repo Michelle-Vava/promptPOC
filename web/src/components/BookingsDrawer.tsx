@@ -3,6 +3,7 @@
  * Supports cancellation of both confirmed bookings and waitlist entries.
  * Uses Framer Motion spring for panel enter/exit + item stagger.
  */
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Booking, WaitlistEntry, T } from '../lib/data'
 import { useTheme } from '../lib/theme'
@@ -19,6 +20,7 @@ interface BookingsDrawerProps {
 export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, onCancelBooking, onCancelWaitlist }: BookingsDrawerProps) {
   const { tk } = useTheme()
   const empty = bookings.length === 0 && waitlisted.length === 0
+  const [confirmId, setConfirmId] = useState<{ id: number; type: 'booking' | 'waitlist'; name: string } | null>(null)
 
   return (
     <AnimatePresence>
@@ -43,12 +45,12 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
             style={{ width: 400, background: tk.bg, height: '100%', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,.2)' }}
           >
             {/* Header */}
-            <div style={{ background: T.ink, padding: '28px 24px 22px' }}>
+            <div style={{ background: tk.surface, padding: '28px 24px 22px', borderBottom: `1px solid ${tk.line}` }}>
               <button type="button" onClick={onClose} aria-label="Close" style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,.4)',
+                background: 'none', border: 'none', color: tk.muted,
                 fontSize: 22, cursor: 'pointer', display: 'block', marginBottom: 12, fontFamily: 'inherit',
               }}>×</button>
-              <div style={{ fontSize: 22, fontWeight: 800, color: T.white, letterSpacing: '-0.5px', fontFamily: 'Sora,system-ui' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: tk.text, letterSpacing: '-0.5px', fontFamily: 'Sora,system-ui' }}>
                 My Bookings
               </div>
               <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
@@ -107,7 +109,7 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                               <motion.button
                                 type="button"
                                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}
-                                onClick={() => onCancelBooking(b.id)}
+                                onClick={() => setConfirmId({ id: b.id, type: 'booking', name: b.provider.name })}
                                 style={{
                                   width: 26, height: 26, borderRadius: 8, border: 'none',
                                   background: 'rgba(204,0,0,.08)', color: '#CC0000',
@@ -156,7 +158,7 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                               <motion.button
                                 type="button"
                                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}
-                                onClick={() => onCancelWaitlist(w.id)}
+                                onClick={() => setConfirmId({ id: w.id, type: 'waitlist', name: w.provider.name })}
                                 style={{
                                   width: 26, height: 26, borderRadius: 8, border: 'none',
                                   background: 'rgba(204,0,0,.08)', color: '#CC0000',
@@ -173,6 +175,68 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                 </>
               )}
             </div>
+
+            {/* Cancel confirmation modal */}
+            <AnimatePresence>
+              {confirmId && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    backdropFilter: 'blur(4px)', zIndex: 10,
+                  }}
+                  onClick={() => setConfirmId(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.85, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.85, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      background: tk.card, borderRadius: 20, padding: '28px 24px',
+                      width: 320, boxShadow: '0 12px 40px rgba(0,0,0,.2)',
+                      border: `1px solid ${tk.line}`,
+                    }}
+                  >
+                    <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>⚠️</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: tk.text, textAlign: 'center', fontFamily: 'Sora,system-ui' }}>
+                      {confirmId.type === 'booking' ? 'Cancel Booking?' : 'Leave Waitlist?'}
+                    </div>
+                    <p style={{ fontSize: 13, color: tk.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
+                      {confirmId.type === 'booking'
+                        ? `Are you sure you want to cancel your booking with ${confirmId.name}? The provider may have reserved this slot for you.`
+                        : `Remove yourself from the waitlist at ${confirmId.name}?`}
+                    </p>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                      {/* Keep Booking = dominant/primary */}
+                      <button type="button" onClick={() => setConfirmId(null)} style={{
+                        flex: 1, padding: '13px', borderRadius: 12,
+                        background: tk.text, color: tk.bg, fontSize: 13, fontWeight: 800,
+                        border: 'none', cursor: 'pointer', fontFamily: 'Sora,system-ui',
+                      }}>
+                        {confirmId.type === 'booking' ? 'Keep Booking' : 'Stay'}
+                      </button>
+                      {/* Cancel = secondary/destructive */}
+                      <button type="button" onClick={() => {
+                        if (confirmId.type === 'booking') onCancelBooking(confirmId.id)
+                        else onCancelWaitlist(confirmId.id)
+                        setConfirmId(null)
+                      }} style={{
+                        flex: 1, padding: '13px', borderRadius: 12,
+                        background: 'rgba(204,0,0,.08)', color: '#CC0000', fontSize: 13, fontWeight: 600,
+                        border: '1px solid rgba(204,0,0,.15)', cursor: 'pointer', fontFamily: 'Sora,system-ui',
+                      }}>
+                        {confirmId.type === 'booking' ? 'Cancel Booking' : 'Leave'}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       )}
