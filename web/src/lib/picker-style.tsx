@@ -2,7 +2,7 @@
  * picker-style.tsx — Shared picker style preference context (web).
  *
  * Context-based so sidebar & map screen share the same state.
- * Persists 'wheel' | 'dial' to localStorage. Default: 'wheel'.
+ * Persists 'wheel' | 'dial' | 'arc' to localStorage. Default: 'arc'.
  */
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
@@ -21,11 +21,11 @@ function getInitial(): PickerStyle {
     const v = localStorage.getItem(KEY)
     if (v === 'wheel' || v === 'dial' || v === 'arc') return v
   } catch {}
-  return 'wheel'
+  return 'arc'
 }
 
 interface Ctx { pickerStyle: PickerStyle; setPickerStyle: (s: PickerStyle) => void }
-const PickerCtx = createContext<Ctx>({ pickerStyle: 'wheel', setPickerStyle: () => {} })
+const PickerCtx = createContext<Ctx>({ pickerStyle: 'arc', setPickerStyle: () => {} })
 
 export function PickerStyleProvider({ children }: { children: ReactNode }) {
   const [pickerStyle, _set] = useState<PickerStyle>(getInitial)
