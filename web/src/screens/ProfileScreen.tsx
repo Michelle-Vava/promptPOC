@@ -3,8 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'
 import { usePickerStyle, type PickerStyle } from '../lib/picker-style'
-import Shell from '../components/Shell'
-import Footer from '../components/Footer'
+import PageLayout from '../components/PageLayout'
 
 function Toggle({ on, onToggle, color = T.accent, 'aria-label': ariaLabel }: {
   on: boolean; onToggle: () => void; color?: string; 'aria-label'?: string
@@ -47,29 +46,7 @@ export default function ProfileScreen() {
   )
 
   return (
-    <Shell>
-      <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
-        {/* Nav */}
-        <div style={{
-          background: tk.surface, padding: '0 24px', height: 58,
-          display: 'flex', alignItems: 'center', gap: 12,
-          borderBottom: `1px solid ${tk.line}`,
-        }}>
-          <button type="button" onClick={() => navigate({ to: '/map' })} style={{
-            background: 'none', border: 'none', color: tk.muted,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 13, fontFamily: 'Sora,system-ui',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back
-          </button>
-          <span style={{ fontSize: 16, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>Profile</span>
-        </div>
-
-        <div style={{ flex: 1 }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 24px' }}>
+    <PageLayout maxWidth={520}>
 
             {/* Avatar card */}
             <div style={{
@@ -267,11 +244,7 @@ export default function ProfileScreen() {
             <p style={{ fontSize: 11, color: tk.muted, textAlign: 'center', marginTop: 20, lineHeight: 1.7 }}>
               Prompt v1.0.0 · © {new Date().getFullYear()} Prompt Technologies Inc.
             </p>
-          </div>
-        </div>
 
-        <Footer />
-      </div>
-    </Shell>
+    </PageLayout>
   )
 }

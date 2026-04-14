@@ -1,4 +1,4 @@
-/** contact.tsx — Chat simulation with support agent. */
+/** contact.tsx — Smart chat simulation with support agent. */
 import { useState, useRef, useEffect } from 'react'
 import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Platform, StatusBar as RNStatusBar, KeyboardAvoidingView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,16 +7,16 @@ import { Feather } from '@expo/vector-icons'
 import { T } from '../../lib/data'
 import { useTheme } from '../../lib/theme'
 import { s, ms, vs } from '../../lib/scale'
+import { getSmartReply, GREETING } from '../../lib/chat-engine'
 
 interface ChatMessage { id: number; from: 'user' | 'agent'; text: string; time: string }
 
-const AGENT_RESPONSES = [
-  "Hi there! 👋 I'm Sam from PROMPT support. How can I help you today?",
-  "Great question! Let me look into that for you.",
-  "I understand the concern. Here's what I'd suggest...",
-  "I've made a note of this. Our team will follow up within 24 hours.",
-  "Is there anything else I can help you with?",
-  "Thanks for reaching out! Don't hesitate to contact us anytime.",
+const QUICK_REPLIES = [
+  'How do I book?',
+  'How much does it cost?',
+  'Cancel a booking',
+  'Become a provider',
+  'Report a bug',
 ]
 
 function getTimeStr() {
@@ -33,31 +33,33 @@ export default function ContactScreen() {
   const insets = useSafeAreaInsets()
   const topPad = Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 0) : insets.top
   const scrollRef = useRef<ScrollView>(null)
-  const responseIdx = useRef(1)
 
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 0, from: 'agent', text: AGENT_RESPONSES[0], time: getTimeStr() },
+    { id: 0, from: 'agent', text: GREETING, time: getTimeStr() },
   ])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [showChips, setShowChips] = useState(true)
 
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
   }, [messages, typing])
 
-  const send = () => {
-    if (!input.trim()) return
-    const msg: ChatMessage = { id: Date.now(), from: 'user', text: input.trim(), time: getTimeStr() }
-    setMessages(prev => [...prev, msg])
+  const send = (text?: string) => {
+    const msg = (text ?? input).trim()
+    if (!msg) return
+    const userMsg: ChatMessage = { id: Date.now(), from: 'user', text: msg, time: getTimeStr() }
+    setMessages(prev => [...prev, userMsg])
     setInput('')
     setTyping(true)
+    setShowChips(false)
 
     setTimeout(() => {
-      const reply = AGENT_RESPONSES[responseIdx.current % AGENT_RESPONSES.length]
-      responseIdx.current++
+      const reply = getSmartReply(msg)
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'agent', text: reply, time: getTimeStr() }])
       setTyping(false)
-    }, 1200 + Math.random() * 800)
+      setShowChips(true)
+    }, 800 + Math.random() * 1000)
   }
 
   return (
@@ -108,6 +110,22 @@ export default function ContactScreen() {
           )}
         </ScrollView>
 
+        {/* Quick reply chips */}
+        {showChips && !typing && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={[styles.chipsRow, { borderTopColor: tk.line, backgroundColor: tk.bg }]}
+            contentContainerStyle={styles.chipsContent}
+          >
+            {QUICK_REPLIES.map(q => (
+              <Pressable key={q} onPress={() => send(q)} style={[styles.chip, { borderColor: `${T.accent}40`, backgroundColor: `${T.accent}0C` }]}>
+                <Text style={[styles.chipText, { color: T.accent }]}>{q}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
         {/* Input */}
         <View style={[styles.inputBar, { borderTopColor: tk.line, backgroundColor: tk.card, paddingBottom: insets.bottom || vs(12) }]}>
           <TextInput
@@ -115,11 +133,11 @@ export default function ContactScreen() {
             onChangeText={setInput}
             placeholder="Type a message..."
             placeholderTextColor={tk.muted}
-            onSubmitEditing={send}
+            onSubmitEditing={() => send()}
             returnKeyType="send"
             style={[styles.textInput, { backgroundColor: tk.inputBg, borderColor: tk.inputBorder, color: tk.text }]}
           />
-          <Pressable onPress={send} style={[styles.sendBtn, { backgroundColor: T.accent }]}>
+          <Pressable onPress={() => send()} style={[styles.sendBtn, { backgroundColor: T.accent }]}>
             <Feather name="send" size={18} color="#fff" />
           </Pressable>
         </View>
@@ -151,4 +169,8 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'center', gap: s(8), paddingHorizontal: s(12), paddingTop: vs(10), borderTopWidth: 1 },
   textInput: { flex: 1, borderRadius: s(22), borderWidth: 1.5, paddingHorizontal: s(16), paddingVertical: vs(10), fontSize: ms(14), fontFamily: 'Sora_400Regular' },
   sendBtn: { width: s(42), height: s(42), borderRadius: s(21), alignItems: 'center', justifyContent: 'center' },
+  chipsRow: { borderTopWidth: 1, paddingVertical: vs(8) },
+  chipsContent: { paddingHorizontal: s(12), gap: s(8) },
+  chip: { borderWidth: 1, borderRadius: s(20), paddingHorizontal: s(14), paddingVertical: vs(6) },
+  chipText: { fontSize: ms(12), fontFamily: 'Sora_600SemiBold' },
 })

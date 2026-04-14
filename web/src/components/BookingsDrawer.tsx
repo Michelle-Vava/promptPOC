@@ -1,26 +1,24 @@
 /**
- * BookingsDrawer — Animated slide-in drawer for bookings and waitlist.
- * Supports cancellation of both confirmed bookings and waitlist entries.
+ * BookingsDrawer — Animated slide-in drawer for bookings.
+ * Supports cancellation of confirmed bookings.
  * Uses Framer Motion spring for panel enter/exit + item stagger.
  */
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Booking, WaitlistEntry, T } from '../lib/data'
+import { Booking, T } from '../lib/data'
 import { useTheme } from '../lib/theme'
 
 interface BookingsDrawerProps {
   bookings: Booking[]
-  waitlisted: WaitlistEntry[]
   onClose: () => void
   isOpen: boolean
   onCancelBooking: (id: number) => void
-  onCancelWaitlist: (id: number) => void
 }
 
-export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, onCancelBooking, onCancelWaitlist }: BookingsDrawerProps) {
+export default function BookingsDrawer({ bookings, onClose, isOpen, onCancelBooking }: BookingsDrawerProps) {
   const { tk } = useTheme()
-  const empty = bookings.length === 0 && waitlisted.length === 0
-  const [confirmId, setConfirmId] = useState<{ id: number; type: 'booking' | 'waitlist'; name: string } | null>(null)
+  const empty = bookings.length === 0
+  const [confirmId, setConfirmId] = useState<{ id: number; name: string } | null>(null)
 
   return (
     <AnimatePresence>
@@ -55,9 +53,6 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
               </div>
               <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
                 <span style={{ fontSize: 12, color: T.green, fontWeight: 600 }}>{bookings.length} confirmed</span>
-                {waitlisted.length > 0 && (
-                  <span style={{ fontSize: 12, color: T.accent, fontWeight: 600 }}>{waitlisted.length} waitlisted</span>
-                )}
               </div>
             </div>
 
@@ -109,56 +104,7 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                               <motion.button
                                 type="button"
                                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}
-                                onClick={() => setConfirmId({ id: b.id, type: 'booking', name: b.provider.name })}
-                                style={{
-                                  width: 26, height: 26, borderRadius: 8, border: 'none',
-                                  background: 'rgba(204,0,0,.08)', color: '#CC0000',
-                                  fontSize: 13, cursor: 'pointer', display: 'flex',
-                                  alignItems: 'center', justifyContent: 'center',
-                                }}
-                              >✕</motion.button>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </>
-                  )}
-
-                  {/* Waitlisted */}
-                  {waitlisted.length > 0 && (
-                    <>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: tk.muted, textTransform: 'uppercase', letterSpacing: '1.5px', margin: '16px 0 10px' }}>
-                        Waitlisted
-                      </div>
-                      <AnimatePresence>
-                        {waitlisted.map((w, i) => (
-                          <motion.div
-                            key={w.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, x: 40, scale: 0.96 }}
-                            transition={{ delay: i * 0.04, duration: 0.22 }}
-                            style={{
-                              display: 'flex', gap: 12, alignItems: 'center',
-                              padding: '14px 16px', borderRadius: 14, marginBottom: 8,
-                              background: tk.card, border: `1px dashed ${w.color}40`,
-                            }}
-                          >
-                            <div style={{
-                              width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-                              background: `${w.color}18`, border: `1px solid ${w.color}30`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                            }}>{w.icon}</div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: tk.text }}>{w.provider.name}</div>
-                              <div style={{ fontSize: 11, color: tk.muted, marginTop: 3 }}>{w.hour} · waiting for slot</div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <div style={{ background: `${w.color}12`, borderRadius: 9, padding: '4px 9px', fontSize: 14 }}>🔔</div>
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}
-                                onClick={() => setConfirmId({ id: w.id, type: 'waitlist', name: w.provider.name })}
+                                onClick={() => setConfirmId({ id: b.id, name: b.provider.name })}
                                 style={{
                                   width: 26, height: 26, borderRadius: 8, border: 'none',
                                   background: 'rgba(204,0,0,.08)', color: '#CC0000',
@@ -204,12 +150,10 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                   >
                     <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>⚠️</div>
                     <div style={{ fontSize: 16, fontWeight: 800, color: tk.text, textAlign: 'center', fontFamily: 'Sora,system-ui' }}>
-                      {confirmId.type === 'booking' ? 'Cancel Booking?' : 'Leave Waitlist?'}
+                      Cancel Booking?
                     </div>
                     <p style={{ fontSize: 13, color: tk.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
-                      {confirmId.type === 'booking'
-                        ? `Are you sure you want to cancel your booking with ${confirmId.name}? The provider may have reserved this slot for you.`
-                        : `Remove yourself from the waitlist at ${confirmId.name}?`}
+                      Are you sure you want to cancel your booking with {confirmId.name}? The provider may have reserved this slot for you.
                     </p>
                     <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                       {/* Keep Booking = dominant/primary */}
@@ -218,19 +162,18 @@ export default function BookingsDrawer({ bookings, waitlisted, onClose, isOpen, 
                         background: tk.text, color: tk.bg, fontSize: 13, fontWeight: 800,
                         border: 'none', cursor: 'pointer', fontFamily: 'Sora,system-ui',
                       }}>
-                        {confirmId.type === 'booking' ? 'Keep Booking' : 'Stay'}
+                        Keep Booking
                       </button>
                       {/* Cancel = secondary/destructive */}
                       <button type="button" onClick={() => {
-                        if (confirmId.type === 'booking') onCancelBooking(confirmId.id)
-                        else onCancelWaitlist(confirmId.id)
+                        onCancelBooking(confirmId.id)
                         setConfirmId(null)
                       }} style={{
                         flex: 1, padding: '13px', borderRadius: 12,
                         background: 'rgba(204,0,0,.08)', color: '#CC0000', fontSize: 13, fontWeight: 600,
                         border: '1px solid rgba(204,0,0,.15)', cursor: 'pointer', fontFamily: 'Sora,system-ui',
                       }}>
-                        {confirmId.type === 'booking' ? 'Cancel Booking' : 'Leave'}
+                        Cancel Booking
                       </button>
                     </div>
                   </motion.div>

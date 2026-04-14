@@ -5,15 +5,14 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'
-import Shell from '../components/Shell'
-import Footer from '../components/Footer'
+import PageLayout from '../components/PageLayout'
 
 const FAQS = [
   { q: 'How does PROMPT work?', a: 'PROMPT connects you with same-day service providers in Halifax. Browse providers on the map, pick an available time slot, and confirm your booking instantly. No waiting, no phone calls.' },
   { q: 'Is PROMPT free for customers?', a: 'Yes — PROMPT is 100% free for customers. No booking fees, no hidden charges, forever. Providers pay just $1 per confirmed booking.' },
   { q: 'How do I cancel a booking?', a: 'Open your Activity screen, find the booking you want to cancel, and tap the "Cancel" button. Cancellations are free if made at least 1 hour before your appointment.' },
   { q: 'What if my provider cancels?', a: 'If a provider cancels, you\'ll be notified immediately and we\'ll suggest similar available providers nearby so you can rebook quickly.' },
-  { q: 'How does the waitlist work?', a: 'When a provider\'s slot is full, you can join the waitlist. If a spot opens up, you\'ll be automatically moved to confirmed and notified instantly.' },
+  { q: 'What happens if no slots are available?', a: 'If a provider has no open slots at your selected time, try adjusting the time wheel to find alternative times. You can also browse other providers in the same category.' },
   { q: 'What areas does PROMPT cover?', a: 'PROMPT currently serves the Halifax Regional Municipality, including Downtown Halifax, Dartmouth, Bedford, and surrounding areas. We\'re expanding soon!' },
   { q: 'How do I become a provider?', a: 'Tap "List Your Services" on the home screen and create a provider account. Set your availability, add your services, and start accepting bookings in minutes.' },
   { q: 'What does it cost for providers?', a: 'Providers pay a flat $1 fee per confirmed booking. That\'s it — no subscriptions, no percentages, no hidden fees. You keep everything else.' },
@@ -25,18 +24,12 @@ export default function FAQScreen() {
   const [openIdx, setOpenIdx] = useState<number | null>(null)
 
   return (
-    <Shell>
-      <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, maxWidth: 640, margin: '0 auto', width: '100%', padding: '40px 20px' }}>
-          <button type="button" onClick={() => navigate({ to: '/profile' })} style={{
-            background: 'none', border: 'none', color: tk.muted, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Sora,system-ui', fontSize: 13, marginBottom: 28,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back
-          </button>
+    <PageLayout>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24, fontSize: 12, color: tk.muted, fontFamily: 'Sora,system-ui' }}>
+            <span onClick={() => navigate({ to: '/profile' })} style={{ cursor: 'pointer', color: T.accent, fontWeight: 600 }}>Profile</span>
+            <span>›</span>
+            <span>FAQ</span>
+          </div>
 
           <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', marginBottom: 6, fontFamily: 'Sora,system-ui' }}>
             FAQ
@@ -69,9 +62,6 @@ export default function FAQScreen() {
               </div>
             ))}
           </div>
-        </div>
-        <Footer dark={mode === 'dark'} />
-      </div>
-    </Shell>
+    </PageLayout>
   )
 }

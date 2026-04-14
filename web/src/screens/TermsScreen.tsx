@@ -2,27 +2,21 @@
  * TermsScreen — Terms of Service page.
  */
 import { useNavigate } from '@tanstack/react-router'
+import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'
-import Shell from '../components/Shell'
-import Footer from '../components/Footer'
+import PageLayout from '../components/PageLayout'
 
 export default function TermsScreen() {
   const { tk, mode } = useTheme()
   const navigate = useNavigate()
 
   return (
-    <Shell>
-      <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, maxWidth: 640, margin: '0 auto', width: '100%', padding: '40px 20px' }}>
-          <button type="button" onClick={() => navigate({ to: '/profile' })} style={{
-            background: 'none', border: 'none', color: tk.muted, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Sora,system-ui', fontSize: 13, marginBottom: 28,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back
-          </button>
+    <PageLayout>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24, fontSize: 12, color: tk.muted, fontFamily: 'Sora,system-ui' }}>
+            <span onClick={() => navigate({ to: '/profile' })} style={{ cursor: 'pointer', color: T.accent, fontWeight: 600 }}>Profile</span>
+            <span>›</span>
+            <span>Terms</span>
+          </div>
 
           <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', marginBottom: 6, fontFamily: 'Sora,system-ui' }}>
             Terms of Service
@@ -48,9 +42,6 @@ export default function TermsScreen() {
               </p>
             </div>
           ))}
-        </div>
-        <Footer dark={mode === 'dark'} />
-      </div>
-    </Shell>
+    </PageLayout>
   )
 }

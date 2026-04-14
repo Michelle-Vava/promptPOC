@@ -42,6 +42,33 @@ export default function Splash() {
   return (
     <Shell>
       <div style={{ height: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}>
+        {/* ── Top bar ── */}
+        <nav style={{
+          padding: '0 24px', height: 56, display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', flexShrink: 0, borderBottom: `1px solid ${tk.line}`,
+          background: tk.surface, zIndex: 50,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.green, animation: 'pulse 2s infinite' }} />
+            <span style={{ fontSize: 17, fontWeight: 900, color: tk.text, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={() => onGetStarted('customer')} style={{
+              padding: '8px 18px', borderRadius: 10, border: `1.5px solid ${tk.line}`,
+              background: 'transparent', color: tk.text, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'Sora,system-ui', transition: 'background .15s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = tk.inputBg)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >Log in</button>
+            <button type="button" onClick={() => onGetStarted('customer')} style={{
+              padding: '8px 18px', borderRadius: 10, border: 'none',
+              background: tk.text, color: tk.bg, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'Sora,system-ui', transition: 'opacity .15s',
+            }}>Sign up</button>
+          </div>
+        </nav>
+
         <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', overflow: 'hidden' }}>
 
           {/* Left hero */}
@@ -239,7 +266,7 @@ export default function Splash() {
           )}
         </div>
 
-        <Footer dark={mode === 'dark'} />
+        <Footer />
       </div>
     </Shell>
   )

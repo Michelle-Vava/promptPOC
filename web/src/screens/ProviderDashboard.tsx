@@ -1,12 +1,57 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { T } from '../lib/data'
+import { motion, AnimatePresence } from 'framer-motion'
+import { T, GROUPS } from '../lib/data'
 import { useTheme } from '../lib/theme'
 import Shell from '../components/Shell'
 import Footer from '../components/Footer'
 
 interface Request { id: number; time: string; customer: string }
 interface AcceptedBooking { id: number; time: string; customer: string }
+
+interface Service {
+  id: number
+  name: string
+  category: string
+  price: number
+  duration: string
+  active: boolean
+}
+
+interface Review {
+  id: number
+  customer: string
+  rating: number
+  date: string
+  text: string
+}
+
+const MOCK_SERVICES: Service[] = [
+  { id: 1, name: 'Classic Haircut', category: 'hair', price: 25, duration: '30 min', active: true },
+  { id: 2, name: 'Beard Trim', category: 'hair', price: 15, duration: '15 min', active: true },
+  { id: 3, name: 'Hot Towel Shave', category: 'hair', price: 30, duration: '30 min', active: true },
+  { id: 4, name: 'Kids Cut', category: 'hair', price: 18, duration: '20 min', active: true },
+  { id: 5, name: 'Fade & Design', category: 'hair', price: 35, duration: '45 min', active: false },
+]
+
+const MOCK_REVIEWS: Review[] = [
+  { id: 1, customer: 'James R.', rating: 5, date: 'Apr 8, 2025', text: 'Best barber in Halifax! Always get a perfect fade. Tom really takes the time to get it right.' },
+  { id: 2, customer: 'Sarah M.', rating: 5, date: 'Apr 7, 2025', text: 'Quick, professional, and affordable. My son loves his haircuts here.' },
+  { id: 3, customer: 'Alex K.', rating: 4, date: 'Apr 6, 2025', text: 'Great experience. The hot towel shave was very relaxing. Will be back!' },
+  { id: 4, customer: 'Mike D.', rating: 5, date: 'Apr 5, 2025', text: 'Prompt booking made it so easy. Showed up on time, got a great cut, done in 30 min.' },
+  { id: 5, customer: 'Lisa T.', rating: 4, date: 'Apr 4, 2025', text: 'Clean shop, friendly staff. Only 4 stars because parking can be tricky.' },
+  { id: 6, customer: 'Chris P.', rating: 5, date: 'Apr 3, 2025', text: 'Switched from my old barber — Tom is the real deal. Consistently excellent.' },
+]
+
+const EARNINGS_WEEKLY = [
+  { day: 'Mon', amount: 145 },
+  { day: 'Tue', amount: 210 },
+  { day: 'Wed', amount: 180 },
+  { day: 'Thu', amount: 165 },
+  { day: 'Fri', amount: 280 },
+  { day: 'Sat', amount: 320 },
+  { day: 'Sun', amount: 95 },
+]
 
 const BILLING_ROWS = [
   { date: 'Apr 8, 2025', id: 'BK-1041', amount: '$1.00', status: 'Charged' },
@@ -45,7 +90,7 @@ function generateSlots(start: string, end: string, dur: number): string[] {
 export default function ProviderDashboard() {
   const navigate = useNavigate()
   const { tk } = useTheme()
-  const [tab, setTab]   = useState<'dashboard' | 'account'>('dashboard')
+  const [tab, setTab]   = useState<'dashboard' | 'services' | 'reviews' | 'account'>('dashboard')
   const [isLive, setIsLive] = useState(true)
 
   // Slots state
@@ -64,6 +109,14 @@ export default function ProviderDashboard() {
   ])
   const [accepted, setAccepted] = useState<AcceptedBooking[]>([])
 
+  // Services state
+  const [services, setServices] = useState<Service[]>(MOCK_SERVICES)
+  const [editingService, setEditingService] = useState<Service | null>(null)
+  const [showAddService, setShowAddService] = useState(false)
+  const [newServiceName, setNewServiceName] = useState('')
+  const [newServicePrice, setNewServicePrice] = useState('')
+  const [newServiceDur, setNewServiceDur] = useState('30 min')
+
   const handleAccept = (r: Request) => {
     setAccepted(a => [...a, { id: r.id, time: r.time, customer: r.customer }])
     setRequests(rs => rs.filter(x => x.id !== r.id))
@@ -77,13 +130,38 @@ export default function ProviderDashboard() {
     setEditingSlots(false)
   }
 
+  const handleToggleService = (id: number) =>
+    setServices(ss => ss.map(s => s.id === id ? { ...s, active: !s.active } : s))
+
+  const handleAddService = () => {
+    if (!newServiceName.trim() || !newServicePrice.trim()) return
+    setServices(ss => [...ss, {
+      id: Date.now(),
+      name: newServiceName.trim(),
+      category: 'hair',
+      price: parseInt(newServicePrice) || 0,
+      duration: newServiceDur,
+      active: true,
+    }])
+    setNewServiceName('')
+    setNewServicePrice('')
+    setNewServiceDur('30 min')
+    setShowAddService(false)
+  }
+
+  const handleDeleteService = (id: number) =>
+    setServices(ss => ss.filter(s => s.id !== id))
+
   const previewSlots = generateSlots(startHour, endHour, slotDur)
   const bookingsToday = 3 + accepted.length
   const chargedToday  = 3 + accepted.length
+  const totalEarnings = EARNINGS_WEEKLY.reduce((a, b) => a + b.amount, 0)
+  const maxEarning = Math.max(...EARNINGS_WEEKLY.map(e => e.amount))
+  const avgRating = (MOCK_REVIEWS.reduce((a, r) => a + r.rating, 0) / MOCK_REVIEWS.length).toFixed(1)
 
   const TabBtn = ({ id, label }: { id: typeof tab; label: string }) => (
     <button type="button" onClick={() => setTab(id)} style={{
-      padding: '8px 20px', borderRadius: 20, border: 'none', cursor: 'pointer',
+      padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer',
       fontSize: 13, fontWeight: 700, fontFamily: 'Sora,system-ui',
       background: tab === id ? tk.card : 'transparent',
       color: tab === id ? tk.text : tk.muted,
@@ -111,6 +189,8 @@ export default function ProviderDashboard() {
             <span style={{ fontSize: 16, fontWeight: 900, color: tk.text, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
             <div style={{ display: 'flex', gap: 2, marginLeft: 16, background: tk.inputBg, borderRadius: 24, padding: 3 }}>
               <TabBtn id="dashboard" label="Dashboard" />
+              <TabBtn id="services" label="Services" />
+              <TabBtn id="reviews" label="Reviews" />
               <TabBtn id="account"   label="Account" />
             </div>
           </div>
@@ -173,6 +253,34 @@ export default function ProviderDashboard() {
                   <div style={{ fontSize: 12, color: tk.muted, marginTop: 4 }}>{l}</div>
                 </div>
               ))}
+            </div>
+
+            {/* Earnings chart */}
+            <div style={{ background: tk.card, borderRadius: 18, padding: '24px', marginBottom: 24, boxShadow: '0 1px 8px rgba(0,0,0,.05)', border: `1px solid ${tk.line}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>Weekly Earnings</div>
+                  <div style={{ fontSize: 12, color: tk.muted, marginTop: 2 }}>Total: ${totalEarnings}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: T.green, fontFamily: 'Sora,system-ui' }}>${totalEarnings}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.green, background: `${T.green}15`, padding: '3px 8px', borderRadius: 8 }}>+12%</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
+                {EARNINGS_WEEKLY.map(e => (
+                  <div key={e.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: tk.text, fontFamily: 'Sora,system-ui' }}>${e.amount}</span>
+                    <div style={{
+                      width: '100%', maxWidth: 40, borderRadius: 8,
+                      height: `${(e.amount / maxEarning) * 80}px`,
+                      background: e.amount === maxEarning ? T.green : `${T.green}40`,
+                      transition: 'height .3s ease',
+                    }} />
+                    <span style={{ fontSize: 11, fontWeight: 600, color: tk.muted }}>{e.day}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
@@ -315,6 +423,196 @@ export default function ProviderDashboard() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+          </div>
+        )}
+
+        {/* ── Services tab ──────────────────────────────────────────────────── */}
+        {tab === 'services' && (
+          <div style={{ flex: 1 }}>
+          <div style={{ maxWidth: 780, margin: '0 auto', padding: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', fontFamily: 'Sora,system-ui' }}>My Services</div>
+                <p style={{ fontSize: 14, color: tk.muted, marginTop: 4 }}>{services.filter(s => s.active).length} active · {services.length} total</p>
+              </div>
+              <button type="button" onClick={() => setShowAddService(true)} style={{
+                padding: '10px 20px', borderRadius: 12, background: tk.text, color: tk.bg,
+                fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'Sora,system-ui',
+              }}>+ Add Service</button>
+            </div>
+
+            {/* Add service form */}
+            <AnimatePresence>
+              {showAddService && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{ overflow: 'hidden', marginBottom: 16 }}
+                >
+                  <div style={{ background: tk.card, borderRadius: 18, padding: '24px', border: `1px solid ${tk.line}`, boxShadow: '0 1px 8px rgba(0,0,0,.05)' }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: tk.text, marginBottom: 16, fontFamily: 'Sora,system-ui' }}>Add New Service</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: tk.muted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 5 }}>Name</div>
+                        <input type="text" value={newServiceName} onChange={e => setNewServiceName(e.target.value)}
+                          placeholder="e.g. Beard Trim"
+                          style={{
+                            width: '100%', padding: '10px 12px', borderRadius: 10,
+                            background: tk.surface, border: `1px solid ${tk.line}`,
+                            color: tk.text, fontSize: 13, fontFamily: 'Sora,system-ui', outline: 'none',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: tk.muted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 5 }}>Price ($)</div>
+                        <input type="number" value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)}
+                          placeholder="25"
+                          style={{
+                            width: '100%', padding: '10px 12px', borderRadius: 10,
+                            background: tk.surface, border: `1px solid ${tk.line}`,
+                            color: tk.text, fontSize: 13, fontFamily: 'Sora,system-ui', outline: 'none',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: tk.muted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 5 }}>Duration</div>
+                        <select value={newServiceDur} onChange={e => setNewServiceDur(e.target.value)} style={selectStyle}>
+                          {['15 min', '20 min', '30 min', '45 min', '60 min', '90 min'].map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setShowAddService(false)} style={{
+                        padding: '10px 18px', borderRadius: 10, background: tk.surface,
+                        border: `1px solid ${tk.line}`, color: tk.text,
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                      }}>Cancel</button>
+                      <button type="button" onClick={handleAddService} style={{
+                        padding: '10px 18px', borderRadius: 10, background: T.green,
+                        border: 'none', color: T.white,
+                        fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                      }}>Add Service</button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Service list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {services.map(s => {
+                const cg = GROUPS.find(g => g.id === s.category)
+                return (
+                  <motion.div
+                    key={s.id}
+                    layout
+                    style={{
+                      background: tk.card, borderRadius: 16, padding: '20px 24px',
+                      border: `1px solid ${tk.line}`, boxShadow: '0 1px 8px rgba(0,0,0,.05)',
+                      opacity: s.active ? 1 : 0.6, transition: 'opacity .2s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{
+                          width: 42, height: 42, borderRadius: 12,
+                          background: `${cg?.color || T.accent}12`, border: `1px solid ${cg?.color || T.accent}22`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                        }}>{cg?.icon || '✂️'}</div>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>{s.name}</div>
+                          <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                            <span style={{ fontSize: 12, color: tk.muted }}>💰 ${s.price}</span>
+                            <span style={{ fontSize: 12, color: tk.muted }}>⏱ {s.duration}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <button type="button" onClick={() => handleToggleService(s.id)} style={{
+                          padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                          background: s.active ? `${T.green}12` : tk.surface,
+                          color: s.active ? T.green : tk.muted,
+                          border: `1px solid ${s.active ? T.green + '30' : tk.line}`,
+                          cursor: 'pointer', fontFamily: 'inherit',
+                        }}>{s.active ? 'Active' : 'Paused'}</button>
+                        <button type="button" onClick={() => handleDeleteService(s.id)} style={{
+                          width: 32, height: 32, borderRadius: 8, background: 'rgba(204,0,0,.06)',
+                          border: 'none', color: '#CC0000', fontSize: 14, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>×</button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </div>
+          </div>
+        )}
+
+        {/* ── Reviews tab ───────────────────────────────────────────────────── */}
+        {tab === 'reviews' && (
+          <div style={{ flex: 1 }}>
+          <div style={{ maxWidth: 780, margin: '0 auto', padding: '40px' }}>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', fontFamily: 'Sora,system-ui' }}>Reviews</div>
+              <p style={{ fontSize: 14, color: tk.muted, marginTop: 4 }}>{MOCK_REVIEWS.length} reviews · {avgRating} average</p>
+            </div>
+
+            {/* Rating summary */}
+            <div style={{ background: tk.card, borderRadius: 18, padding: '24px', marginBottom: 24, boxShadow: '0 1px 8px rgba(0,0,0,.05)', border: `1px solid ${tk.line}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, fontWeight: 900, color: tk.text, fontFamily: 'Sora,system-ui', lineHeight: 1 }}>{avgRating}</div>
+                  <div style={{ fontSize: 20, color: '#FFA500', marginTop: 4 }}>{'★'.repeat(Math.round(Number(avgRating)))}</div>
+                  <div style={{ fontSize: 12, color: tk.muted, marginTop: 4 }}>{MOCK_REVIEWS.length} reviews</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const count = MOCK_REVIEWS.filter(r => r.rating === star).length
+                    const pct = (count / MOCK_REVIEWS.length) * 100
+                    return (
+                      <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: tk.muted, width: 14 }}>{star}</span>
+                        <span style={{ fontSize: 12, color: '#FFA500' }}>★</span>
+                        <div style={{ flex: 1, height: 8, borderRadius: 4, background: tk.inputBg, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', borderRadius: 4, background: '#FFA500', width: `${pct}%`, transition: 'width .3s' }} />
+                        </div>
+                        <span style={{ fontSize: 11, color: tk.muted, width: 20, textAlign: 'right' }}>{count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Review cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {MOCK_REVIEWS.map(r => (
+                <div key={r.id} style={{
+                  background: tk.card, borderRadius: 16, padding: '20px 24px',
+                  border: `1px solid ${tk.line}`, boxShadow: '0 1px 8px rgba(0,0,0,.05)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        background: tk.inputBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14, fontWeight: 700, color: tk.muted,
+                      }}>{r.customer.charAt(0)}</div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: tk.text, fontFamily: 'Sora,system-ui' }}>{r.customer}</div>
+                        <div style={{ fontSize: 11, color: tk.muted }}>{r.date}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 14, color: '#FFA500' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
+                  </div>
+                  <p style={{ fontSize: 13, color: tk.sub, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+                </div>
+              ))}
             </div>
           </div>
           </div>

@@ -23,6 +23,7 @@ import {
   Outlet,
 } from '@tanstack/react-router'
 import { ThemeProvider } from './lib/theme'
+import { PickerStyleProvider } from './lib/picker-style'
 import Splash from './screens/Splash'
 import Auth from './screens/Auth'
 import MapScreen from './screens/MapScreen'
@@ -41,7 +42,9 @@ import CookiesScreen from './screens/CookiesScreen'
 const rootRoute = createRootRoute({
   component: () => (
     <ThemeProvider>
-      <Outlet />
+      <PickerStyleProvider>
+        <Outlet />
+      </PickerStyleProvider>
     </ThemeProvider>
   ),
 })

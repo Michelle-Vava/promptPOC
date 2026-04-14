@@ -2,7 +2,7 @@
  * ProviderPanel — Provider detail panel with Framer Motion animations.
  *
  * Desktop: 320px sidebar. Mobile: rendered inside bottom sheet by MapScreen.
- * Spring slide-in. Book/waitlist CTAs have whileHover/whileTap micro-interactions.
+ * Spring slide-in. Book CTA has whileHover/whileTap micro-interactions.
  * Success state uses spring popIn with bounce. Price breakdown shown pre-confirm.
  */
 import { useState } from 'react'
@@ -15,22 +15,19 @@ interface ProviderPanelProps {
   provider: Provider
   hour: string
   onBook: (provider: Provider, hour: string) => void
-  onWaitlist: (provider: Provider, hour: string) => void
   onClose: () => void
   alreadyBooked?: boolean
 }
 
-export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onClose, alreadyBooked = false }: ProviderPanelProps) {
+export default function ProviderPanel({ provider, hour, onBook, onClose, alreadyBooked = false }: ProviderPanelProps) {
   const { tk } = useTheme()
   const cg = GROUPS.find(g => g.id === provider.cat)
   const isAvailable = provider.slots.includes(hour)
   const [done, setDone] = useState(false)
-  const [waitlisted, setWaitlisted] = useState(false)
   const [loading, setLoading] = useState(false)
   const dist = roadDistanceKm(USER_LOCATION.latitude, USER_LOCATION.longitude, provider.lat, provider.lng)
 
   const handleBook     = () => { setLoading(true); setTimeout(() => { setLoading(false); setDone(true); setTimeout(() => onBook(provider, hour), 900) }, 1200) }
-  const handleWaitlist = () => { setWaitlisted(true); setTimeout(() => onWaitlist(provider, hour), 700) }
 
   return (
     <motion.div
@@ -185,7 +182,7 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
       </div>
 
       {/* Price breakdown — always visible before action */}
-      {!done && !waitlisted && !loading && (
+      {!done && !loading && (
         <div style={{ padding: '12px 20px 0', background: tk.surface, borderTop: `1px solid ${tk.line}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: tk.muted }}>
             <span>Your cost</span>
@@ -238,7 +235,7 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
                 <span style={{ fontSize: 14, fontWeight: 700, color: tk.muted, fontFamily: 'Sora,system-ui' }}>Already booked for {hour}</span>
               </div>
             </motion.div>
-          ) : !done && !waitlisted ? (
+          ) : !done ? (
             <motion.div key="cta" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {isAvailable ? (
                 <motion.button
@@ -256,20 +253,14 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
                   Confirm — Book {hour} free →
                 </motion.button>
               ) : (
-                <motion.button
-                  type="button"
-                  onClick={handleWaitlist}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    width: '100%', padding: '15px', borderRadius: 13,
-                    background: `${cg?.color}15`, color: cg?.color, fontSize: 14, fontWeight: 800,
-                    border: `1.5px solid ${cg?.color}35`, cursor: 'pointer', letterSpacing: '-0.2px',
-                    fontFamily: 'Sora,system-ui',
-                  }}
-                >
-                  🔔 Join Waitlist for {provider.name}
-                </motion.button>
+                <div style={{
+                  width: '100%', padding: '15px', borderRadius: 13,
+                  background: tk.inputBg, fontSize: 14, fontWeight: 700,
+                  border: `1px solid ${tk.line}`, textAlign: 'center',
+                  color: tk.muted, fontFamily: 'Sora,system-ui',
+                }}>
+                  Not available at {hour}
+                </div>
               )}
             </motion.div>
           ) : done ? (
@@ -320,28 +311,7 @@ export default function ProviderPanel({ provider, hour, onBook, onWaitlist, onCl
                 💸 <span style={{ color: T.green, fontWeight: 700 }}>$0 — free for you</span>
               </motion.div>
             </motion.div>
-          ) : (
-            <motion.div
-              key="waitlisted"
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-              style={{ textAlign: 'center' }}
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 16, delay: 0.1 }}
-                style={{
-                  width: 52, height: 52, borderRadius: 16, background: `${cg?.color}18`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 10px', fontSize: 26,
-                }}
-              >🔔</motion.div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>You're on the list!</div>
-              <div style={{ fontSize: 12, color: tk.muted, marginTop: 3 }}>We'll ping you if {provider.name} opens up</div>
-            </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
       </div>
     </motion.div>

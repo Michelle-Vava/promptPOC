@@ -2,7 +2,7 @@
  * data.ts — Central data layer for Prompt.
  *
  * Contains all TypeScript interfaces, mock provider data, category definitions,
- * static color tokens (T), and mock notification/waitlist data used across the app.
+ * static color tokens (T), and mock notification data used across the app.
  *
  * In a production app this would be replaced by API calls. For the POC everything
  * lives here so all screens share a single source of truth.
@@ -43,19 +43,10 @@ export interface Booking {
   icon: string   // Copied from the provider's category icon
 }
 
-/** An entry on the customer's waitlist for a fully-booked provider */
-export interface WaitlistEntry {
-  id: number      // Same as provider.id — used for deduplication
-  provider: Provider
-  hour: string    // Time slot the customer wants
-  color: string
-  icon: string
-}
-
 /** An in-app notification shown in the notifications drawer */
 export interface Notification {
   id: number
-  type: 'booking_confirmed' | 'waitlist_opened' | 'provider_accepted'
+  type: 'booking_confirmed' | 'slot_opened' | 'provider_accepted'
   message: string
   time: string    // Human-readable relative time e.g. "2 min ago"
   read: boolean
@@ -85,7 +76,9 @@ export const HOURS: string[] = [
 // ── Providers ─────────────────────────────────────────────────────────────────
 //
 // 40 mock providers placed at verified Halifax-region land coordinates.
-// Coverage: Halifax (25), Dartmouth (6), Bedford (5), Tantallon (4).
+// Coverage: Halifax (25), Dartmouth (6), Bedford (5), Tantallon (4),
+// Westphal (5), Lower Sackville (5), Cole Harbour (5), Spryfield (4),
+// Clayton Park (4), Eastern Passage (4), Hammonds Plains (4), Fall River (4).
 // Key geography: harbour is on the EAST side — lng > ~-63.572 at downtown
 // latitudes puts you in the water. All coordinates below are on solid ground.
 
@@ -144,6 +137,57 @@ export const PROVIDERS: Provider[] = [
   { id: 38, cat: 'repair',   name: 'Bay Road Auto',       lat: 44.6560, lng: -63.7490, rating: 4.4, reviews: 62,  price: 80,  dur: '60 min',  slots: ['9 AM', '10 AM', '1 PM', '3 PM'],         addr: '5230 St Margarets Bay Rd',    badge: null },
   { id: 39, cat: 'dining',   name: 'Tantallon Bistro',    lat: 44.6530, lng: -63.7425, rating: 4.5, reviews: 97,  price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '5 PM', '6 PM'],        addr: '5120 St Margarets Bay Rd',    badge: null },
   { id: 40, cat: 'outdoor',  name: 'Bay Kayak Adventures', lat: 44.6480, lng: -63.7380, rating: 4.9, reviews: 22, price: 65,  dur: '3 hrs',   slots: ['9 AM', '1 PM'],                          addr: 'St Margarets Bay, Tantallon', badge: 'New' },
+
+  // ── Westphal ────────────────────────────────────────────────────────────────
+  { id: 41, cat: 'hair',     name: 'Westphal Barber Shop', lat: 44.6520, lng: -63.5220, rating: 4.5, reviews: 76,  price: 28,  dur: '30 min',  slots: ['9 AM', '10 AM', '12 PM', '3 PM', '5 PM'], addr: '55 Tacoma Dr, Westphal',      badge: null },
+  { id: 42, cat: 'beauty',   name: 'Blossom Beauty',       lat: 44.6545, lng: -63.5185, rating: 4.7, reviews: 43,  price: 55,  dur: '60 min',  slots: ['10 AM', '1 PM', '4 PM'],                 addr: '120 Tacoma Dr, Westphal',     badge: 'New' },
+  { id: 43, cat: 'repair',   name: 'Westphal Auto Care',   lat: 44.6490, lng: -63.5240, rating: 4.3, reviews: 98,  price: 70,  dur: '60 min',  slots: ['9 AM', '11 AM', '2 PM', '4 PM'],         addr: '33 Cole Harbour Rd, Westphal', badge: null },
+  { id: 44, cat: 'dining',   name: 'Lakeside Grill',       lat: 44.6510, lng: -63.5160, rating: 4.6, reviews: 152, price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '6 PM'], addr: '200 Montague Rd, Westphal',  badge: 'Hot' },
+  { id: 45, cat: 'wellness', name: 'Serenity Massage',     lat: 44.6535, lng: -63.5205, rating: 4.8, reviews: 37,  price: 80,  dur: '60 min',  slots: ['9 AM', '11 AM', '2 PM', '4 PM'],         addr: '88 Tacoma Dr, Westphal',      badge: null },
+
+  // ── Lower Sackville ─────────────────────────────────────────────────────────
+  { id: 46, cat: 'hair',     name: 'Sackville Style Co.',  lat: 44.7605, lng: -63.6715, rating: 4.6, reviews: 89,  price: 30,  dur: '35 min',  slots: ['9 AM', '11 AM', '1 PM', '3 PM', '5 PM'], addr: '745 Sackville Dr, Lr Sackville', badge: null },
+  { id: 47, cat: 'repair',   name: 'Sackville Tech Hub',   lat: 44.7580, lng: -63.6680, rating: 4.4, reviews: 57,  price: 55,  dur: '45 min',  slots: ['10 AM', '12 PM', '2 PM', '4 PM'],        addr: '680 Sackville Dr, Lr Sackville', badge: 'Fast' },
+  { id: 48, cat: 'doctor',   name: 'Sackville Med Clinic', lat: 44.7620, lng: -63.6740, rating: 4.5, reviews: 245, price: 0,   dur: '20 min',  slots: ['9 AM', '10 AM', '11 AM', '2 PM', '4 PM'], addr: '810 Sackville Dr, Lr Sackville', badge: 'Open Now' },
+  { id: 49, cat: 'dining',   name: 'The Sack Diner',       lat: 44.7590, lng: -63.6695, rating: 4.3, reviews: 134, price: 0,   dur: '45 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '8 PM'], addr: '720 Sackville Dr, Lr Sackville', badge: null },
+  { id: 50, cat: 'beauty',   name: 'Glow Up Sackville',    lat: 44.7615, lng: -63.6725, rating: 4.7, reviews: 48,  price: 45,  dur: '50 min',  slots: ['10 AM', '1 PM', '3 PM', '5 PM'],         addr: '770 Sackville Dr, Lr Sackville', badge: 'New' },
+
+  // ── Cole Harbour ────────────────────────────────────────────────────────────
+  { id: 51, cat: 'hair',     name: 'Cole Harbour Cuts',     lat: 44.6540, lng: -63.4730, rating: 4.6, reviews: 85,  price: 30,  dur: '35 min',  slots: ['9 AM', '11 AM', '1 PM', '3 PM', '5 PM'], addr: '4 Forest Hills Dr, Cole Harbour',   badge: null },
+  { id: 52, cat: 'dining',   name: 'Harbour House Café',    lat: 44.6575, lng: -63.4685, rating: 4.7, reviews: 198, price: 0,   dur: '45 min',  slots: ['10 AM', '11 AM', '12 PM', '1 PM', '5 PM'], addr: '10 Cole Harbour Rd, Cole Harbour', badge: 'Hot' },
+  { id: 53, cat: 'wellness', name: 'Harmony Yoga Studio',   lat: 44.6555, lng: -63.4710, rating: 4.9, reviews: 62,  price: 30,  dur: '60 min',  slots: ['9 AM', '11 AM', '4 PM', '6 PM'],         addr: '50 Forest Hills Pkwy, Cole Harbour', badge: null },
+  { id: 54, cat: 'repair',   name: 'Cole Harbour Auto',     lat: 44.6510, lng: -63.4760, rating: 4.3, reviews: 110, price: 65,  dur: '60 min',  slots: ['9 AM', '10 AM', '1 PM', '3 PM'],         addr: '85 Cole Harbour Rd, Cole Harbour',  badge: null },
+  { id: 55, cat: 'doctor',   name: 'Cole Harbour Medical',  lat: 44.6560, lng: -63.4700, rating: 4.5, reviews: 320, price: 0,   dur: '20 min',  slots: ['9 AM', '10 AM', '11 AM', '2 PM', '4 PM'], addr: '30 Forest Hills Pkwy, Cole Harbour', badge: 'Open Now' },
+
+  // ── Spryfield ───────────────────────────────────────────────────────────────
+  { id: 56, cat: 'hair',     name: 'Spryfield Styles',      lat: 44.6170, lng: -63.6210, rating: 4.5, reviews: 54,  price: 28,  dur: '30 min',  slots: ['9 AM', '10 AM', '12 PM', '2 PM', '4 PM'], addr: '349 Herring Cove Rd, Spryfield',    badge: null },
+  { id: 57, cat: 'beauty',   name: 'Blush Spa Spryfield',   lat: 44.6150, lng: -63.6240, rating: 4.7, reviews: 42,  price: 50,  dur: '60 min',  slots: ['10 AM', '1 PM', '3 PM'],                 addr: '419 Herring Cove Rd, Spryfield',    badge: 'New' },
+  { id: 58, cat: 'dining',   name: 'Dee Dee\'s Diner',      lat: 44.6185, lng: -63.6190, rating: 4.4, reviews: 175, price: 0,   dur: '45 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '6 PM'], addr: '303 Herring Cove Rd, Spryfield',   badge: null },
+  { id: 59, cat: 'outdoor',  name: 'McIntosh Run Adventures', lat: 44.6100, lng: -63.6280, rating: 4.8, reviews: 25, price: 40, dur: '2 hrs',   slots: ['9 AM', '1 PM'],                          addr: 'McIntosh Run Trail, Spryfield',     badge: 'New' },
+
+  // ── Clayton Park ────────────────────────────────────────────────────────────
+  { id: 60, cat: 'hair',     name: 'Clip & Co. Clayton',    lat: 44.6570, lng: -63.6350, rating: 4.6, reviews: 97,  price: 32,  dur: '30 min',  slots: ['9 AM', '11 AM', '1 PM', '3 PM', '5 PM'], addr: '278 Lacewood Dr, Clayton Park',     badge: null },
+  { id: 61, cat: 'wellness', name: 'Balance Studio',        lat: 44.6590, lng: -63.6380, rating: 4.8, reviews: 73,  price: 70,  dur: '60 min',  slots: ['10 AM', '12 PM', '3 PM', '5 PM'],        addr: '301 Lacewood Dr, Clayton Park',     badge: null },
+  { id: 62, cat: 'dining',   name: 'Clayton Park Kitchen',  lat: 44.6555, lng: -63.6370, rating: 4.5, reviews: 215, price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '8 PM'], addr: '250 Lacewood Dr, Clayton Park',    badge: null },
+  { id: 63, cat: 'repair',   name: 'Lacewood Tech Repair',  lat: 44.6580, lng: -63.6325, rating: 4.4, reviews: 68,  price: 55,  dur: '45 min',  slots: ['10 AM', '12 PM', '2 PM', '4 PM'],        addr: '310 Lacewood Dr, Clayton Park',     badge: 'Fast' },
+
+  // ── Eastern Passage ─────────────────────────────────────────────────────────
+  { id: 64, cat: 'hair',     name: 'Passage Barbers',       lat: 44.6340, lng: -63.5150, rating: 4.5, reviews: 63,  price: 25,  dur: '30 min',  slots: ['9 AM', '10 AM', '12 PM', '2 PM', '4 PM'], addr: '1007 Shore Rd, Eastern Passage',    badge: null },
+  { id: 65, cat: 'dining',   name: 'Fisherman\'s Cove Grill', lat: 44.6280, lng: -63.5090, rating: 4.8, reviews: 340, price: 0, dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '6 PM'], addr: '145 Shore Rd, Eastern Passage',    badge: 'Top Rated' },
+  { id: 66, cat: 'outdoor',  name: 'Passage Paddle Co.',    lat: 44.6300, lng: -63.5120, rating: 4.7, reviews: 35,  price: 50,  dur: '2 hrs',   slots: ['9 AM', '11 AM', '2 PM'],                 addr: 'Shore Rd Wharf, Eastern Passage',   badge: 'New' },
+  { id: 67, cat: 'beauty',   name: 'Coastal Glow Spa',      lat: 44.6350, lng: -63.5130, rating: 4.6, reviews: 45,  price: 55,  dur: '60 min',  slots: ['10 AM', '1 PM', '3 PM', '5 PM'],         addr: '980 Shore Rd, Eastern Passage',     badge: null },
+
+  // ── Hammonds Plains ─────────────────────────────────────────────────────────
+  { id: 68, cat: 'hair',     name: 'Plains Barber Shop',    lat: 44.7050, lng: -63.7020, rating: 4.5, reviews: 58,  price: 28,  dur: '30 min',  slots: ['9 AM', '11 AM', '1 PM', '3 PM'],         addr: '1558 Hammonds Plains Rd',           badge: null },
+  { id: 69, cat: 'dining',   name: 'Board & Bean Café',     lat: 44.7080, lng: -63.7060, rating: 4.7, reviews: 132, price: 0,   dur: '45 min',  slots: ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM'], addr: '1620 Hammonds Plains Rd',          badge: 'Hot' },
+  { id: 70, cat: 'wellness', name: 'Woodland Wellness',     lat: 44.7065, lng: -63.7040, rating: 4.8, reviews: 39,  price: 85,  dur: '60 min',  slots: ['9 AM', '11 AM', '2 PM', '4 PM'],         addr: '1580 Hammonds Plains Rd',           badge: null },
+  { id: 71, cat: 'outdoor',  name: 'Kingswood Trails Co.',  lat: 44.7100, lng: -63.7090, rating: 4.9, reviews: 28,  price: 35,  dur: '3 hrs',   slots: ['9 AM', '1 PM'],                          addr: 'Kingswood Dr, Hammonds Plains',     badge: 'New' },
+
+  // ── Fall River ──────────────────────────────────────────────────────────────
+  { id: 72, cat: 'hair',     name: 'Fall River Fades',      lat: 44.7840, lng: -63.6120, rating: 4.6, reviews: 71,  price: 30,  dur: '30 min',  slots: ['9 AM', '10 AM', '12 PM', '2 PM', '4 PM'], addr: '2657 Fall River Rd, Fall River',    badge: null },
+  { id: 73, cat: 'dining',   name: 'Lakeview Bistro',       lat: 44.7860, lng: -63.6150, rating: 4.5, reviews: 89,  price: 0,   dur: '60 min',  slots: ['11 AM', '12 PM', '1 PM', '5 PM', '6 PM'], addr: '2700 Fall River Rd, Fall River',   badge: null },
+  { id: 74, cat: 'doctor',   name: 'Fall River Clinic',     lat: 44.7825, lng: -63.6100, rating: 4.4, reviews: 195, price: 0,   dur: '20 min',  slots: ['9 AM', '10 AM', '11 AM', '2 PM', '4 PM'], addr: '2610 Fall River Rd, Fall River',   badge: 'Open Now' },
+  { id: 75, cat: 'wellness', name: 'Lakeside Retreat Spa',  lat: 44.7850, lng: -63.6135, rating: 4.9, reviews: 33,  price: 95,  dur: '90 min',  slots: ['9 AM', '11 AM', '2 PM'],                 addr: '2680 Fall River Rd, Fall River',    badge: 'Top Rated' },
 ]
 
 // ── Static dark tokens (T) ────────────────────────────────────────────────────
@@ -167,10 +211,10 @@ export const T = {
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: 1, type: 'booking_confirmed',  message: 'Stylish Cuts confirmed your 11 AM booking',            time: '2 min ago',  read: false },
-  { id: 2, type: 'waitlist_opened',    message: 'A spot opened at Zen Spa HFX for 2 PM — book now!',    time: '15 min ago', read: false },
+  { id: 2, type: 'slot_opened',        message: 'A spot opened at Zen Spa HFX for 2 PM — book now!',    time: '15 min ago', read: false },
   { id: 3, type: 'provider_accepted',  message: 'The Barber Co. accepted your 1 PM request',            time: '1 hr ago',   read: true  },
   { id: 4, type: 'booking_confirmed',  message: 'Walk-In Clinic HFX confirmed your 10 AM slot',         time: '3 hrs ago',  read: true  },
-  { id: 5, type: 'waitlist_opened',    message: 'Glow Bar has a new 4 PM opening today',                time: 'Yesterday',  read: true  },
+  { id: 5, type: 'slot_opened',        message: 'Glow Bar has a new 4 PM opening today',                time: 'Yesterday',  read: true  },
 ]
 
 export interface PastBooking {

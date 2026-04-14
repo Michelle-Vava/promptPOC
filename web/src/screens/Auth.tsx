@@ -41,18 +41,19 @@ export default function Auth() {
   return (
     <Shell>
       <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
+        {/* Minimal logo bar */}
+        <nav style={{
+          padding: '0 24px', height: 56, display: 'flex', alignItems: 'center',
+          borderBottom: `1px solid ${tk.line}`, background: tk.surface, flexShrink: 0,
+        }}>
+          <div onClick={handleBack} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.green, animation: 'pulse 2s infinite' }} />
+            <span style={{ fontSize: 17, fontWeight: 900, color: tk.text, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
+          </div>
+        </nav>
+
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
           <div style={{ width: '100%', maxWidth: 420, animation: 'fadeUp .32s ease' }}>
-            <button type="button" onClick={handleBack} style={{
-              background: 'none', border: 'none', color: tk.muted,
-              fontSize: 13, cursor: 'pointer', marginBottom: 28,
-              display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Sora,system-ui',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Back
-            </button>
 
             <div style={{ fontSize: 30, fontWeight: 900, color: tk.text, letterSpacing: '-1px', marginBottom: 6, fontFamily: 'Sora,system-ui' }}>
               {role === 'customer' ? 'Welcome.' : 'List your slots.'}
@@ -129,7 +130,7 @@ export default function Auth() {
             )}
           </div>
         </div>
-        <Footer dark={mode === 'dark'} />
+        <Footer />
       </div>
     </Shell>
   )

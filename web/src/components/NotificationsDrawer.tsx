@@ -16,12 +16,12 @@ interface NotificationsDrawerProps {
 
 const NOTIF_ICONS: Record<Notification['type'], string> = {
   booking_confirmed: '✅',
-  waitlist_opened:   '🔔',
+  slot_opened:       '📢',
   provider_accepted: '👍',
 }
 const NOTIF_COLORS: Record<Notification['type'], string> = {
   booking_confirmed: '#00B87C',
-  waitlist_opened:   '#FF5C00',
+  slot_opened:       '#FF5C00',
   provider_accepted: '#0066FF',
 }
 

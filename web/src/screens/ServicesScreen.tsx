@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { PROVIDERS, GROUPS, Provider, Booking, T } from '../lib/data'
 import { USER_LOCATION, roadDistanceKm, formatDistance, formatETA } from '../lib/geo'
 import { useTheme } from '../lib/theme'
-import Shell from '../components/Shell'
+import PageLayout from '../components/PageLayout'
 
 const MOCK_NOW_HOUR = 11
 
@@ -228,84 +228,74 @@ export default function ServicesScreen() {
   }
 
   return (
-    <Shell>
-      <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
+    <PageLayout maxWidth={1400} padding="0 32px 40px">
 
-        {/* Nav */}
-        <div style={{
-          background: tk.surface, padding: '0 20px', height: 52,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0, borderBottom: `1px solid ${tk.line}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button type="button" onClick={() => navigate({ to: '/map' })} style={{
-              background: tk.inputBg, border: `1px solid ${tk.inputBorder}`,
-              borderRadius: 10, width: 34, height: 34, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-              </svg>
-            </button>
-            <span style={{ fontSize: 16, fontWeight: 900, color: tk.text, fontFamily: 'Sora,system-ui', letterSpacing: '-0.4px' }}>Services</span>
-            {bookings.length > 0 && (
-              <span style={{
-                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                background: `${T.green}20`, color: T.green,
-              }}>{bookings.length} booked</span>
-            )}
+        {/* Page header */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 28, fontWeight: 900, color: tk.text, fontFamily: 'Sora,system-ui', letterSpacing: '-1px' }}>Services</span>
+              {bookings.length > 0 && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                  background: `${T.green}20`, color: T.green,
+                }}>{bookings.length} booked</span>
+              )}
+            </div>
+            <p style={{ fontSize: 14, color: tk.muted, marginTop: 2 }}>Browse and book same-day services across Halifax</p>
           </div>
-          <button type="button" onClick={() => navigate({ to: '/profile' })} style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: tk.inputBg, border: `1px solid ${tk.inputBorder}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2" strokeLinecap="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          </button>
+          <span style={{ fontSize: 12, color: tk.muted, fontWeight: 600 }}>{filtered.length} providers</span>
         </div>
 
         {/* Search + Category filters */}
-        <div style={{ padding: '14px 20px 0' }}>
-          <div style={{ position: 'relative', marginBottom: 14 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2.5" strokeLinecap="round"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+        <div style={{
+          position: 'sticky', top: 56, zIndex: 100,
+          background: tk.bg, paddingTop: 8, paddingBottom: 4, marginBottom: 8,
+        }}>
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2.5" strokeLinecap="round"
+              style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search providers…"
+              placeholder="Search by name, area, or address…"
               style={{
-                width: '100%', padding: '10px 36px 10px 34px', borderRadius: 12,
+                width: '100%', padding: '12px 40px 12px 38px', borderRadius: 14,
                 background: tk.surface, border: `1px solid ${tk.line}`,
-                color: tk.text, fontSize: 13, fontFamily: 'Sora,system-ui', outline: 'none',
+                color: tk.text, fontSize: 14, fontFamily: 'Sora,system-ui', outline: 'none',
+                transition: 'border-color .15s',
               }}
             />
+            {search && (
+              <button type="button" onClick={() => setSearch('')} style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                width: 22, height: 22, borderRadius: '50%', background: tk.inputBg,
+                border: 'none', color: tk.muted, fontSize: 12, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>×</button>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12 }}>
-            <button type="button" onClick={() => setCategory(null)} style={{
-              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-              fontFamily: 'Sora,system-ui', cursor: 'pointer', whiteSpace: 'nowrap',
-              background: !category ? tk.text : tk.surface,
-              color: !category ? tk.bg : tk.muted,
-              border: `1px solid ${!category ? tk.text : tk.line}`,
-            }}>All</button>
-            {GROUPS.map(g => (
-              <button key={g.id} type="button" onClick={() => setCategory(g.id === category ? null : g.id)} style={{
-                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                fontFamily: 'Sora,system-ui', cursor: 'pointer', whiteSpace: 'nowrap',
-                background: g.id === category ? `${g.color}15` : tk.surface,
-                color: g.id === category ? g.color : tk.muted,
-                border: `1px solid ${g.id === category ? g.color + '40' : tk.line}`,
-              }}>{g.icon} {g.label}</button>
-            ))}
+            {GROUPS.map(g => {
+              const count = PROVIDERS.filter(p => p.cat === g.id).length
+              return (
+                <button key={g.id} type="button" onClick={() => setCategory(g.id === category ? null : g.id)} style={{
+                  padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                  fontFamily: 'Sora,system-ui', cursor: 'pointer', whiteSpace: 'nowrap',
+                  background: g.id === category ? `${g.color}15` : tk.surface,
+                  color: g.id === category ? g.color : tk.muted,
+                  border: `1px solid ${g.id === category ? g.color + '40' : tk.line}`,
+                  transition: 'all .15s',
+                }}>{g.icon} {g.label} <span style={{ opacity: 0.6 }}>({count})</span></button>
+              )
+            })}
           </div>
         </div>
 
         {/* Provider cards */}
-        <div style={{ flex: 1, padding: '0 20px 30px', overflowY: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 14 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
             {filtered.map((p, i) => {
               const cg = GROUPS.find(g => g.id === p.cat)
               const status = getProviderStatus(p)
@@ -313,61 +303,78 @@ export default function ServicesScreen() {
               return (
                 <motion.div
                   key={p.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03, duration: 0.25 }}
+                  transition={{ delay: Math.min(i * 0.02, 0.4), duration: 0.25 }}
                   onClick={() => setPickerProv(p)}
                   style={{
-                    background: tk.card, borderRadius: 16, padding: '16px',
+                    background: tk.card, borderRadius: 18, padding: '18px 20px',
                     border: `1px solid ${tk.line}`, cursor: 'pointer',
-                    transition: 'box-shadow .15s, border-color .15s',
+                    transition: 'all .2s ease',
                   }}
-                  whileHover={{ boxShadow: '0 4px 20px rgba(0,0,0,.08)', borderColor: cg?.color + '40' }}
+                  whileHover={{ boxShadow: '0 8px 30px rgba(0,0,0,.07)', borderColor: cg?.color + '40', y: -2 }}
                 >
-                  {/* Top row — icon + name + badge */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  {/* Top row — icon + name + badge + price */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                     <div style={{
-                      width: 40, height: 40, borderRadius: 12,
-                      background: `${cg?.color}12`, border: `1px solid ${cg?.color}20`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
+                      width: 44, height: 44, borderRadius: 14,
+                      background: `${cg?.color}12`, border: `1px solid ${cg?.color}22`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
                     }}>{cg?.icon}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui', letterSpacing: '-0.2px' }}>{p.name}</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui', letterSpacing: '-0.3px' }}>{p.name}</span>
                         {p.badge && (
                           <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: `${cg?.color}15`, color: cg?.color }}>{p.badge}</span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11, color: tk.muted, marginTop: 2 }}>{p.addr}</div>
+                      <div style={{ fontSize: 12, color: tk.muted, marginTop: 2 }}>{p.addr}</div>
                     </div>
-                  </div>
-
-                  {/* Status + price row */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: status.color }} />
-                      <span style={{ fontSize: 11, fontWeight: 700, color: status.color }}>{status.label}</span>
-                      {status.nextSlot && (
-                        <span style={{ fontSize: 11, color: tk.muted, marginLeft: 4 }}>Next: {status.nextSlot}</span>
-                      )}
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: tk.text, fontFamily: 'Sora,system-ui' }}>
+                    <span style={{ fontSize: 15, fontWeight: 900, color: tk.text, fontFamily: 'Sora,system-ui', flexShrink: 0 }}>
                       {p.price === 0 ? 'Free' : `$${p.price}`}
                     </span>
                   </div>
 
-                  {/* Bottom — rating + distance + slots badge */}
+                  {/* Info row — status, duration, distance */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+                    borderTop: `1px solid ${tk.line}`, borderBottom: `1px solid ${tk.line}`,
+                    marginBottom: 12,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: status.color }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: status.color }}>{status.label}</span>
+                    </div>
+                    {status.nextSlot && (
+                      <>
+                        <span style={{ color: tk.line }}>·</span>
+                        <span style={{ fontSize: 12, color: tk.sub }}>Next: {status.nextSlot}</span>
+                      </>
+                    )}
+                    <span style={{ color: tk.line }}>·</span>
+                    <span style={{ fontSize: 12, color: tk.muted }}>⏱ {p.dur}</span>
+                    <span style={{ color: tk.line }}>·</span>
+                    <span style={{ fontSize: 12, color: tk.muted }}>📍 {formatDistance(dist)}</span>
+                  </div>
+
+                  {/* Bottom — rating + slots */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                       <span style={{ color: '#FFA500', fontWeight: 700 }}>★ {p.rating}</span>
                       <span style={{ color: tk.muted }}>({p.reviews})</span>
-                      <span style={{ color: tk.muted }}>· {formatDistance(dist)}</span>
                     </div>
                     {p.slots.length > 0 && (
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8,
-                        background: `${T.green}15`, color: T.green,
-                      }}>{p.slots.length} slots</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {p.slots.slice(0, 3).map(s => (
+                          <span key={s} style={{
+                            fontSize: 10, fontWeight: 600, padding: '3px 7px', borderRadius: 6,
+                            background: `${T.green}12`, color: T.green, border: `1px solid ${T.green}20`,
+                          }}>{s}</span>
+                        ))}
+                        {p.slots.length > 3 && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: tk.muted }}>+{p.slots.length - 3}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -376,14 +383,20 @@ export default function ServicesScreen() {
           </div>
 
           {filtered.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: 30, marginBottom: 10 }}>🔍</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: tk.text, fontFamily: 'Sora,system-ui' }}>No providers found</div>
-              <div style={{ fontSize: 12, color: tk.muted, marginTop: 4 }}>Try a different search or category</div>
+            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: tk.text, fontFamily: 'Sora,system-ui' }}>No providers found</div>
+              <div style={{ fontSize: 13, color: tk.muted, marginTop: 6 }}>Try a different search or category</div>
+              {(category || search) && (
+                <button type="button" onClick={() => { setCategory(null); setSearch('') }} style={{
+                  marginTop: 16, padding: '10px 24px', borderRadius: 12, background: tk.surface,
+                  border: `1px solid ${tk.line}`, color: tk.text, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'Sora,system-ui',
+                }}>Clear filters</button>
+              )}
             </div>
           )}
         </div>
-      </div>
 
       {/* Slot picker modal */}
       <AnimatePresence>
@@ -396,6 +409,6 @@ export default function ServicesScreen() {
           />
         )}
       </AnimatePresence>
-    </Shell>
+    </PageLayout>
   )
 }

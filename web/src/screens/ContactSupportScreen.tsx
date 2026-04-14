@@ -1,11 +1,15 @@
 /**
- * ContactSupportScreen — Chat simulation with support agent.
+ * ContactSupportScreen — Smart chat simulation with support agent.
+ *
+ * Uses keyword-aware response engine for contextual replies.
+ * Includes quick-reply suggestion chips for common topics.
  */
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { T } from '../lib/data'
 import { useTheme } from '../lib/theme'
-import Shell from '../components/Shell'
+import { getSmartReply, GREETING } from '../lib/chat-engine'
+import PageLayout from '../components/PageLayout'
 
 interface ChatMessage {
   id: number
@@ -14,13 +18,12 @@ interface ChatMessage {
   time: string
 }
 
-const AGENT_RESPONSES = [
-  "Hi there! 👋 I'm Sam from PROMPT support. How can I help you today?",
-  "Great question! Let me look into that for you.",
-  "I understand the concern. Here's what I'd suggest...",
-  "I've made a note of this. Our team will follow up within 24 hours.",
-  "Is there anything else I can help you with?",
-  "Thanks for reaching out! Don't hesitate to contact us anytime.",
+const QUICK_REPLIES = [
+  'How do I book?',
+  'How much does it cost?',
+  'Cancel a booking',
+  'Become a provider',
+  'Report a bug',
 ]
 
 function getTimeStr() {
@@ -35,48 +38,41 @@ export default function ContactSupportScreen() {
   const { tk, mode } = useTheme()
   const navigate = useNavigate()
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 0, from: 'agent', text: AGENT_RESPONSES[0], time: getTimeStr() },
+    { id: 0, from: 'agent', text: GREETING, time: getTimeStr() },
   ])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
-  const responseIdx = useRef(1)
+  const [showChips, setShowChips] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
-  const sendMessage = () => {
-    if (!input.trim()) return
-    const userMsg: ChatMessage = { id: Date.now(), from: 'user', text: input.trim(), time: getTimeStr() }
+  const sendMessage = (text?: string) => {
+    const msg = (text ?? input).trim()
+    if (!msg) return
+    const userMsg: ChatMessage = { id: Date.now(), from: 'user', text: msg, time: getTimeStr() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setTyping(true)
+    setShowChips(false)
 
     setTimeout(() => {
-      const reply = AGENT_RESPONSES[responseIdx.current % AGENT_RESPONSES.length]
-      responseIdx.current++
+      const reply = getSmartReply(msg)
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'agent', text: reply, time: getTimeStr() }])
       setTyping(false)
-    }, 1200 + Math.random() * 800)
+      setShowChips(true)
+    }, 800 + Math.random() * 1000)
   }
 
   return (
-    <Shell>
-      <div style={{ height: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <PageLayout fill footer={false}>
+        {/* Chat header */}
         <div style={{
-          padding: '16px 20px', borderBottom: `1px solid ${tk.line}`,
+          padding: '12px 20px', borderBottom: `1px solid ${tk.line}`,
           display: 'flex', alignItems: 'center', gap: 12, background: tk.card,
         }}>
-          <button type="button" onClick={() => navigate({ to: '/profile' })} style={{
-            background: 'none', border: 'none', color: tk.muted, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', fontFamily: 'Sora,system-ui',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
           <div style={{
             width: 36, height: 36, borderRadius: '50%', background: T.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -136,6 +132,26 @@ export default function ContactSupportScreen() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Quick reply chips */}
+        {showChips && !typing && (
+          <div style={{
+            padding: '8px 16px', display: 'flex', gap: 6, flexWrap: 'wrap',
+            borderTop: `1px solid ${tk.line}`, background: tk.bg,
+          }}>
+            {QUICK_REPLIES.map(q => (
+              <button key={q} type="button" onClick={() => sendMessage(q)} style={{
+                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                background: `${T.accent}0C`, border: `1px solid ${T.accent}25`,
+                color: T.accent, cursor: 'pointer', fontFamily: 'Sora,system-ui',
+                transition: 'all .15s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.background = `${T.accent}18`)}
+                onMouseLeave={e => (e.currentTarget.style.background = `${T.accent}0C`)}
+              >{q}</button>
+            ))}
+          </div>
+        )}
+
         {/* Input */}
         <div style={{
           padding: '12px 16px', borderTop: `1px solid ${tk.line}`,
@@ -153,7 +169,7 @@ export default function ContactSupportScreen() {
               outline: 'none',
             }}
           />
-          <button type="button" onClick={sendMessage} style={{
+          <button type="button" onClick={() => sendMessage()} style={{
             width: 44, height: 44, borderRadius: '50%',
             background: T.accent, border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -163,7 +179,6 @@ export default function ContactSupportScreen() {
             </svg>
           </button>
         </div>
-      </div>
-    </Shell>
+    </PageLayout>
   )
 }

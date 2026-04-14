@@ -1,19 +1,17 @@
 /**
  * ActivityScreen — Bookings activity view for web.
- * Shows confirmed, waitlisted, and past bookings.
+ * Shows confirmed and past bookings.
  */
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { T, PROVIDERS, GROUPS } from '../lib/data'
 import { useTheme } from '../lib/theme'
-import Shell from '../components/Shell'
-import Footer from '../components/Footer'
+import PageLayout from '../components/PageLayout'
 
 type Tab = 'upcoming' | 'history'
 
 const MOCK_BOOKINGS = [
   { id: 1, provider: PROVIDERS[0], time: 'Today · 2:00 PM', status: 'confirmed' as const },
-  { id: 2, provider: PROVIDERS[3], time: 'Today · 4:30 PM', status: 'waitlisted' as const },
   { id: 3, provider: PROVIDERS[7], time: 'Tomorrow · 10:00 AM', status: 'confirmed' as const },
   { id: 4, provider: PROVIDERS[12], time: 'Tomorrow · 1:00 PM', status: 'confirmed' as const },
 ]
@@ -34,21 +32,7 @@ export default function ActivityScreen() {
   const groupColor = (g: string) => GROUPS.find(gr => gr.id === g)?.color ?? T.accent
 
   return (
-    <Shell>
-      <div style={{ minHeight: '100vh', background: tk.bg, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, maxWidth: 600, margin: '0 auto', width: '100%', padding: '40px 20px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-            <button type="button" onClick={() => navigate({ to: '/map' })} style={{
-              background: 'none', border: 'none', color: tk.muted, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Sora,system-ui', fontSize: 13,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Back
-            </button>
-          </div>
+    <PageLayout>
 
           <div style={{ fontSize: 28, fontWeight: 900, color: tk.text, letterSpacing: '-1px', marginBottom: 6, fontFamily: 'Sora,system-ui' }}>
             Activity
@@ -113,42 +97,6 @@ export default function ActivityScreen() {
                       </div>
                     </div>
                   ))}
-
-                  {/* Waitlisted section */}
-                  {MOCK_BOOKINGS.some(b => b.status === 'waitlisted') && (
-                    <>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: tk.muted, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: 16, marginBottom: 4 }}>
-                        Waitlisted
-                      </div>
-                      {MOCK_BOOKINGS.filter(b => b.status === 'waitlisted').map(b => (
-                        <div key={b.id} style={{
-                          background: tk.card, borderRadius: 16, padding: '16px 20px',
-                          border: `1px solid ${tk.line}`, display: 'flex', alignItems: 'center', gap: 14,
-                          boxShadow: '0 1px 8px rgba(0,0,0,.04)',
-                        }}>
-                          <div style={{
-                            width: 44, height: 44, borderRadius: 12,
-                            background: groupColor(b.provider.cat),
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 18, color: '#fff', fontWeight: 800,
-                          }}>
-                            {b.provider.name.charAt(0)}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: tk.text }}>{b.provider.name}</div>
-                            <div style={{ fontSize: 12, color: tk.muted, marginTop: 2 }}>{b.time}</div>
-                          </div>
-                          <div style={{
-                            padding: '4px 10px', borderRadius: 8,
-                            background: 'rgba(245,158,11,.12)', color: '#F59E0B',
-                            fontSize: 11, fontWeight: 700,
-                          }}>
-                            Waitlisted
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
                 </>
               )}
             </div>
@@ -198,9 +146,6 @@ export default function ActivityScreen() {
               ))}
             </div>
           )}
-        </div>
-        <Footer dark={mode === 'dark'} />
-      </div>
-    </Shell>
+    </PageLayout>
   )
 }

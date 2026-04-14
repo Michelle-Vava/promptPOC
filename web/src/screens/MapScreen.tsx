@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { PROVIDERS, HOURS, GROUPS, Booking, Provider, WaitlistEntry, Notification, MOCK_NOTIFICATIONS, T } from '../lib/data'
+import { PROVIDERS, HOURS, GROUPS, Booking, Provider, Notification, MOCK_NOTIFICATIONS, T } from '../lib/data'
 import { useTheme } from '../lib/theme'
 import { useWindowWidth } from '../hooks/useWindowWidth'
 import { USER_LOCATION, roadDistanceKm, formatDistance, formatETA } from '../lib/geo'
@@ -10,9 +10,11 @@ import CategoryBar from '../components/CategoryBar'
 import LeafletMap from '../components/LeafletMap'
 import TimeWheel from '../components/TimeWheel'
 import DialPicker from '../components/DialPicker'
+import ArcPicker from '../components/ArcPicker'
 import ProviderPanel from '../components/ProviderPanel'
 import BookingsDrawer from '../components/BookingsDrawer'
 import NotificationsDrawer from '../components/NotificationsDrawer'
+import SidebarNav from '../components/SidebarNav'
 import Toast, { ToastData } from '../components/Toast'
 import { usePickerStyle } from '../lib/picker-style'
 
@@ -40,12 +42,12 @@ export default function MapScreen() {
   const [hourIdx, setHourIdx]       = useState(2)
   const [activeId, setActiveId]     = useState<number | null>(null)
   const [bookings, setBookings]     = useState<Booking[]>([])
-  const [waitlisted, setWaitlisted] = useState<WaitlistEntry[]>([])
 
   // UI state
   const [search, setSearch]               = useState('')
   const [drawer, setDrawer]               = useState(false)
   const [notifDrawer, setNotifDrawer]     = useState(false)
+  const [sidebarOpen, setSidebarOpen]     = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
   const [toasts, setToasts]               = useState<ToastData[]>([])
   const [hintDismissed, setHintDismissed] = useState(false)
@@ -71,7 +73,7 @@ export default function MapScreen() {
     : categoryFiltered
 
   const availableIds  = new Set(searchFiltered.filter(p => p.slots.includes(hour)).map(p => p.id))
-  const waitlistedIds = new Set(waitlisted.map(w => w.id))
+  const visibleProviders = searchFiltered.filter(p => availableIds.has(p.id))
   const bookedAtHour  = new Set(bookings.filter(b => b.slot === hour).map(b => b.provider.id))
   const unreadNotifs  = notifications.filter(n => !n.read).length
   const activeProv    = PROVIDERS.find(p => p.id === activeId) ?? null
@@ -82,14 +84,6 @@ export default function MapScreen() {
     setBookings(b => [...b, { id: Date.now(), provider: prov, slot, color: cg?.color ?? '', icon: cg?.icon ?? '' }])
     pushToast(`Booked! ${prov.name} · ${slot}`)
     setTimeout(() => setActiveId(null), 1200)
-  }
-
-  const handleWaitlist = (prov: Provider, slot: string) => {
-    if (waitlistedIds.has(prov.id)) return
-    const cg = GROUPS.find(g => g.id === prov.cat)
-    setWaitlisted(w => [...w, { id: prov.id, provider: prov, hour: slot, color: cg?.color ?? '', icon: cg?.icon ?? '' }])
-    pushToast(`Added to waitlist · ${prov.name}`, 'info')
-    setTimeout(() => setActiveId(null), 1000)
   }
 
   const markAllRead = () => setNotifications(ns => ns.map(n => ({ ...n, read: true })))
@@ -105,6 +99,25 @@ export default function MapScreen() {
           flexShrink: 0, borderBottom: `1px solid ${tk.line}`, zIndex: 50,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Hamburger */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'transparent', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tk.text} strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.green, animation: 'pulse 2s infinite' }} />
             <span style={{ fontSize: 16, fontWeight: 900, color: tk.text, letterSpacing: '-0.4px', fontFamily: 'Sora,system-ui' }}>PROMPT</span>
             {!isMobile && (
@@ -133,21 +146,16 @@ export default function MapScreen() {
               </div>
             )}
 
-            {/* Services */}
-            <button type="button" onClick={() => navigate({ to: '/services' })} style={{
-              padding: '5px 10px', borderRadius: 16,
+            {/* Help / Chat */}
+            <button type="button" title="Help & Support" onClick={() => navigate({ to: '/help/contact' })} style={{
+              position: 'relative', width: 34, height: 34, borderRadius: 10,
               background: tk.inputBg, border: `1px solid ${tk.line}`,
-              color: tk.muted, fontSize: 11, fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'Sora,system-ui',
-            }}>Services</button>
-
-            {/* Provider view */}
-            <button type="button" onClick={() => navigate({ to: '/provider' })} style={{
-              padding: '5px 10px', borderRadius: 16,
-              background: tk.inputBg, border: `1px solid ${tk.line}`,
-              color: tk.muted, fontSize: 11, fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'Sora,system-ui',
-            }}>Provider</button>
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
 
             {/* Notifications */}
             <button type="button" title="Notifications" onClick={() => setNotifDrawer(true)} style={{
@@ -169,18 +177,6 @@ export default function MapScreen() {
               )}
             </button>
 
-            {/* Profile */}
-            <button type="button" title="Profile" onClick={() => navigate({ to: '/profile' })} style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: tk.inputBg, border: `1px solid ${tk.line}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={tk.muted} strokeWidth="2" strokeLinecap="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </button>
-
             {/* Bookings */}
             <button type="button" title="My bookings" onClick={() => setDrawer(true)} style={{
               position: 'relative', width: 34, height: 34, borderRadius: 10,
@@ -192,13 +188,13 @@ export default function MapScreen() {
                 <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
-              {(bookings.length + waitlisted.length) > 0 && (
+              {bookings.length > 0 && (
                 <div style={{
                   position: 'absolute', top: -4, right: -4, width: 16, height: 16,
                   borderRadius: '50%', background: T.accent,
                   fontSize: 9, fontWeight: 800, color: T.white,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>{bookings.length + waitlisted.length}</div>
+                }}>{bookings.length}</div>
               )}
             </button>
           </div>
@@ -235,9 +231,8 @@ export default function MapScreen() {
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
           <div style={{ flex: 1, position: 'relative' }}>
             <LeafletMap
-              providers={searchFiltered}
+              providers={visibleProviders}
               availableIds={availableIds}
-              waitlistedIds={waitlistedIds}
               bookedIds={bookedAtHour}
               activeId={activeId}
               onPinClick={id => { setActiveId(activeId === id ? null : id); setHintDismissed(true) }}
@@ -245,6 +240,8 @@ export default function MapScreen() {
             />
             {pickerStyle === 'dial'
               ? <DialPicker hourIdx={hourIdx} setHourIdx={setHourIdx} />
+              : pickerStyle === 'arc'
+              ? <ArcPicker hourIdx={hourIdx} setHourIdx={setHourIdx} />
               : <TimeWheel hourIdx={hourIdx} setHourIdx={setHourIdx} />}
 
             {/* Open count badge — hidden when panel open */}
@@ -286,7 +283,7 @@ export default function MapScreen() {
                 }}>
                   <div style={{ fontSize: 30, marginBottom: 8 }}>🕐</div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: tk.text, fontFamily: 'Sora,system-ui' }}>Nobody open at {hour}</div>
-                  <div style={{ fontSize: 12, color: tk.muted, marginTop: 4 }}>Adjust the time wheel → or tap a pin to waitlist</div>
+                  <div style={{ fontSize: 12, color: tk.muted, marginTop: 4 }}>Adjust the time wheel → or tap a pin to book</div>
                 </div>
               </div>
             )}
@@ -338,7 +335,6 @@ export default function MapScreen() {
                   provider={activeProv}
                   hour={hour}
                   onBook={handleBook}
-                  onWaitlist={handleWaitlist}
                   onClose={() => setActiveId(null)}
                   alreadyBooked={bookedAtHour.has(activeProv.id)}
                 />
@@ -383,7 +379,6 @@ export default function MapScreen() {
                   provider={activeProv}
                   hour={hour}
                   onBook={handleBook}
-                  onWaitlist={handleWaitlist}
                   onClose={() => setActiveId(null)}
                   alreadyBooked={bookedAtHour.has(activeProv.id)}
                 />
@@ -397,10 +392,8 @@ export default function MapScreen() {
       <BookingsDrawer
         isOpen={drawer}
         bookings={bookings}
-        waitlisted={waitlisted}
         onClose={() => setDrawer(false)}
         onCancelBooking={id => setBookings(bs => bs.filter(b => b.id !== id))}
-        onCancelWaitlist={id => setWaitlisted(ws => ws.filter(w => w.id !== id))}
       />
       <NotificationsDrawer
         isOpen={notifDrawer}
@@ -409,6 +402,7 @@ export default function MapScreen() {
         onClose={() => setNotifDrawer(false)}
       />
       <Toast toasts={toasts} onDismiss={dismissToast} />
+      <SidebarNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </Shell>
   )
 }
